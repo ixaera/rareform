@@ -1,7 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Task } from '../../models/task.interface';
+import { PlannerStoreService } from '../../services/planner-store.service';
 
 @Component({
   selector: 'app-daily-tasks',
@@ -10,50 +11,45 @@ import { Task } from '../../models/task.interface';
   styleUrl: './daily-tasks.css'
 })
 export class DailyTasksComponent {
+  private store = inject(PlannerStoreService);
+
   @Input() tasks: Task[] = [];
   @Input() availableTags: string[] = [];
-  @Input() currentDate: string = '';    // NEW: current viewing date
-  @Input() isPast: boolean = false;     // NEW: period state
-  @Input() isFuture: boolean = false;   // NEW: period state
+  @Input() currentDate: string = '';
+  @Input() isPast: boolean = false;
+  @Input() isFuture: boolean = false;
 
   newTask = '';
   newTaskTagInput: { [taskId: number]: string } = {};
   showTagDropdown: { [taskId: number]: boolean } = {};
+  tagInputVisible: { [taskId: number]: boolean } = {};
 
   addTask(): void {
     if (this.newTask.trim()) {
-      const newTask: Task = {
-        id: Date.now(), // Better ID generation
-        text: this.newTask.trim(),
-        completed: false,
-        tags: [],
-        showTagInput: false,
-        date: this.currentDate,                  // NEW: assign to viewing period
-        createdAt: new Date().toISOString(),    // NEW
-        updatedAt: new Date().toISOString()     // NEW
-      };
-      this.tasks.push(newTask);
+      this.store.addTask(this.newTask.trim());
       this.newTask = '';
     }
+  }
+
+  toggleCompletion(task: Task): void {
+    this.store.toggleTaskCompletion(task.id);
   }
 
   showTaskTagInput(taskId: number, event?: Event): void {
     if (event) {
       event.stopPropagation();
     }
-    this.tasks.forEach(task => {
-      if (task.id !== taskId && task.showTagInput) {
-        task.showTagInput = false;
-        this.newTaskTagInput[task.id] = '';
-        this.showTagDropdown[task.id] = false;
+    // Close other tag inputs
+    for (const id of Object.keys(this.tagInputVisible)) {
+      const numId = Number(id);
+      if (numId !== taskId && this.tagInputVisible[numId]) {
+        this.tagInputVisible[numId] = false;
+        this.newTaskTagInput[numId] = '';
+        this.showTagDropdown[numId] = false;
       }
-    });
-
-    const task = this.tasks.find(t => t.id === taskId);
-    if (task) {
-      task.showTagInput = true;
-      this.showTagDropdown[taskId] = true;
     }
+    this.tagInputVisible[taskId] = true;
+    this.showTagDropdown[taskId] = true;
   }
 
   getFilteredTags(taskId: number): string[] {
@@ -68,19 +64,9 @@ export class DailyTasksComponent {
   }
 
   selectTag(taskId: number, tag: string): void {
-    const task = this.tasks.find(t => t.id === taskId);
-
-    if (task) {
-      if (!task.tags) {
-        task.tags = [];
-      }
-
-      if (task.tags.length < 5 && !task.tags.includes(tag)) {
-        task.tags.push(tag);
-        this.newTaskTagInput[taskId] = '';
-        this.showTagDropdown[taskId] = false;
-      }
-    }
+    this.store.addTaskTag(taskId, tag);
+    this.newTaskTagInput[taskId] = '';
+    this.showTagDropdown[taskId] = false;
   }
 
   onTagInputFocus(taskId: number): void {
@@ -99,10 +85,7 @@ export class DailyTasksComponent {
   }
 
   removeTaskTag(taskId: number, tagIndex: number): void {
-    const task = this.tasks.find(t => t.id === taskId);
-    if (task && task.tags) {
-      task.tags.splice(tagIndex, 1);
-    }
+    this.store.removeTaskTag(taskId, tagIndex);
   }
 
   stopPropagation(event: Event): void {
@@ -110,16 +93,15 @@ export class DailyTasksComponent {
   }
 
   closeAllTagInputs(): void {
-    this.tasks.forEach(task => {
-      task.showTagInput = false;
-    });
+    for (const id of Object.keys(this.tagInputVisible)) {
+      this.tagInputVisible[Number(id)] = false;
+    }
   }
 
   getDayTitle(): string {
     if (!this.currentDate) {
       return 'Today';
     }
-    // Parse the date as local date to avoid timezone issues
     const [year, month, day] = this.currentDate.split('-').map(num => parseInt(num, 10));
     const date = new Date(year, month - 1, day);
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

@@ -1,7 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Goal } from '../../models/task.interface';
+import { PlannerStoreService } from '../../services/planner-store.service';
 
 @Component({
   selector: 'app-quarterly-goals',
@@ -10,51 +11,44 @@ import { Goal } from '../../models/task.interface';
   styleUrl: './quarterly-goals.css'
 })
 export class QuarterlyGoalsComponent {
+  private store = inject(PlannerStoreService);
+
   @Input() goals: Goal[] = [];
   @Input() availableTags: string[] = [];
-  @Input() currentPeriodKey: string = '';   // NEW
-  @Input() isPast: boolean = false;         // NEW
-  @Input() isFuture: boolean = false;       // NEW
+  @Input() currentPeriodKey: string = '';
+  @Input() isPast: boolean = false;
+  @Input() isFuture: boolean = false;
 
   newQuarterlyGoal = '';
   newQuarterlyTagInput: { [goalId: number]: string } = {};
   showTagDropdown: { [goalId: number]: boolean } = {};
+  tagInputVisible: { [goalId: number]: boolean } = {};
 
   addQuarterlyGoal(): void {
     if (this.newQuarterlyGoal.trim()) {
-      const newGoal: Goal = {
-        id: Date.now(), // Better ID generation
-        text: this.newQuarterlyGoal.trim(),
-        completed: false,
-        tags: [],
-        showTagInput: false,
-        scope: 'quarter',                    // NEW
-        periodKey: this.currentPeriodKey,    // NEW
-        createdAt: new Date().toISOString(), // NEW
-        updatedAt: new Date().toISOString()  // NEW
-      };
-      this.goals.push(newGoal);
+      this.store.addGoal(this.newQuarterlyGoal.trim(), 'quarter');
       this.newQuarterlyGoal = '';
     }
+  }
+
+  toggleCompletion(goal: Goal): void {
+    this.store.toggleGoalCompletion(goal.id, 'quarter');
   }
 
   showQuarterlyTagInput(goalId: number, event?: Event): void {
     if (event) {
       event.stopPropagation();
     }
-    this.goals.forEach(goal => {
-      if (goal.id !== goalId && goal.showTagInput) {
-        goal.showTagInput = false;
-        this.newQuarterlyTagInput[goal.id] = '';
-        this.showTagDropdown[goal.id] = false;
+    for (const id of Object.keys(this.tagInputVisible)) {
+      const numId = Number(id);
+      if (numId !== goalId && this.tagInputVisible[numId]) {
+        this.tagInputVisible[numId] = false;
+        this.newQuarterlyTagInput[numId] = '';
+        this.showTagDropdown[numId] = false;
       }
-    });
-
-    const goal = this.goals.find(g => g.id === goalId);
-    if (goal) {
-      goal.showTagInput = true;
-      this.showTagDropdown[goalId] = true;
     }
+    this.tagInputVisible[goalId] = true;
+    this.showTagDropdown[goalId] = true;
   }
 
   getFilteredTags(goalId: number): string[] {
@@ -69,19 +63,9 @@ export class QuarterlyGoalsComponent {
   }
 
   selectTag(goalId: number, tag: string): void {
-    const goal = this.goals.find(g => g.id === goalId);
-
-    if (goal) {
-      if (!goal.tags) {
-        goal.tags = [];
-      }
-
-      if (goal.tags.length < 5 && !goal.tags.includes(tag)) {
-        goal.tags.push(tag);
-        this.newQuarterlyTagInput[goalId] = '';
-        this.showTagDropdown[goalId] = false;
-      }
-    }
+    this.store.addGoalTag(goalId, 'quarter', tag);
+    this.newQuarterlyTagInput[goalId] = '';
+    this.showTagDropdown[goalId] = false;
   }
 
   onTagInputFocus(goalId: number): void {
@@ -100,10 +84,7 @@ export class QuarterlyGoalsComponent {
   }
 
   removeQuarterlyTag(goalId: number, tagIndex: number): void {
-    const goal = this.goals.find(g => g.id === goalId);
-    if (goal && goal.tags) {
-      goal.tags.splice(tagIndex, 1);
-    }
+    this.store.removeGoalTag(goalId, 'quarter', tagIndex);
   }
 
   stopPropagation(event: Event): void {
@@ -111,8 +92,8 @@ export class QuarterlyGoalsComponent {
   }
 
   closeAllTagInputs(): void {
-    this.goals.forEach(goal => {
-      goal.showTagInput = false;
-    });
+    for (const id of Object.keys(this.tagInputVisible)) {
+      this.tagInputVisible[Number(id)] = false;
+    }
   }
 }

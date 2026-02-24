@@ -18,7 +18,10 @@
       "Bash(rd /s /q .angular)",
       "Bash(git -C \"c:\\\\Users\\\\freck\\\\placeholder-planner\" config core.autocrlf)",
       "Bash(git -C \"c:\\\\Users\\\\freck\\\\placeholder-planner\" add .)",
-      "Bash(git -C \"c:\\\\Users\\\\freck\\\\placeholder-planner\" status nul)"
+      "Bash(git -C \"c:\\\\Users\\\\freck\\\\placeholder-planner\" status nul)",
+      "Bash(ls:*)",
+      "Bash(npx ng test --watch=false --browsers=ChromeHeadless)",
+      "Bash(npx ng test:*)"
     ]
   }
 }

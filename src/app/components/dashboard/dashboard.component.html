@@ -1,9 +1,8 @@
 <!-- Main Container with Winter Background -->
-<div (click)="closeAllTagInputs()"
-     class="min-h-screen p-6 transition-all duration-400"
-     [class.period-past]="isPastPeriod()"
-     [class.period-current]="isAtCurrentPeriod(activeScope)"
-     [class.period-future]="isFuturePeriod()">
+<div class="min-h-screen p-6 transition-all duration-400"
+     [class.period-past]="store.isPastPeriod()"
+     [class.period-current]="store.isAtCurrentPeriod(store.activeScope())"
+     [class.period-future]="store.isFuturePeriod()">
 
   <!-- Title Header -->
   <header class="text-center mb-8 relative">
@@ -25,20 +24,20 @@
 
         <!-- Day Tab with Arrows -->
         <div class="flex items-center gap-1">
-          @if (activeScope === 'day') {
+          @if (store.activeScope() === 'day') {
             <app-arrow-button direction="left" (navigate)="navigatePeriod(-1)"></app-arrow-button>
           }
 
           <button
             (click)="setActiveScope('day')"
             [class]="getTabClasses('day')">
-            {{ getDayLabel() }}
-            @if (!isAtCurrentPeriod('day')) {
+            {{ store.getDayLabel() }}
+            @if (!store.isAtCurrentPeriod('day')) {
               <span class="absolute top-0.5 right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
             }
           </button>
 
-          @if (activeScope === 'day') {
+          @if (store.activeScope() === 'day') {
             <app-arrow-button direction="right" (navigate)="navigatePeriod(1)"></app-arrow-button>
           }
         </div>
@@ -47,20 +46,20 @@
 
         <!-- Week Tab with Arrows -->
         <div class="flex items-center gap-1">
-          @if (activeScope === 'week') {
+          @if (store.activeScope() === 'week') {
             <app-arrow-button direction="left" (navigate)="navigatePeriod(-1)"></app-arrow-button>
           }
 
           <button
             (click)="setActiveScope('week')"
             [class]="getTabClasses('week')">
-            {{ getWeekLabel() }}
-            @if (!isAtCurrentPeriod('week')) {
+            {{ store.getWeekLabel() }}
+            @if (!store.isAtCurrentPeriod('week')) {
               <span class="absolute top-0.5 right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
             }
           </button>
 
-          @if (activeScope === 'week') {
+          @if (store.activeScope() === 'week') {
             <app-arrow-button direction="right" (navigate)="navigatePeriod(1)"></app-arrow-button>
           }
         </div>
@@ -69,20 +68,20 @@
 
         <!-- Quarter Tab with Arrows -->
         <div class="flex items-center gap-1">
-          @if (activeScope === 'quarter') {
+          @if (store.activeScope() === 'quarter') {
             <app-arrow-button direction="left" (navigate)="navigatePeriod(-1)"></app-arrow-button>
           }
 
           <button
             (click)="setActiveScope('quarter')"
             [class]="getTabClasses('quarter')">
-            {{ getQuarterLabel() }}
-            @if (!isAtCurrentPeriod('quarter')) {
+            {{ store.getQuarterLabel() }}
+            @if (!store.isAtCurrentPeriod('quarter')) {
               <span class="absolute top-0.5 right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
             }
           </button>
 
-          @if (activeScope === 'quarter') {
+          @if (store.activeScope() === 'quarter') {
             <app-arrow-button direction="right" (navigate)="navigatePeriod(1)"></app-arrow-button>
           }
         </div>
@@ -91,20 +90,20 @@
 
         <!-- Year Tab with Arrows -->
         <div class="flex items-center gap-1">
-          @if (activeScope === 'year') {
+          @if (store.activeScope() === 'year') {
             <app-arrow-button direction="left" (navigate)="navigatePeriod(-1)"></app-arrow-button>
           }
 
           <button
             (click)="setActiveScope('year')"
             [class]="getTabClasses('year')">
-            {{ getYearLabel() }}
-            @if (!isAtCurrentPeriod('year')) {
+            {{ store.getYearLabel() }}
+            @if (!store.isAtCurrentPeriod('year')) {
               <span class="absolute top-0.5 right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
             }
           </button>
 
-          @if (activeScope === 'year') {
+          @if (store.activeScope() === 'year') {
             <app-arrow-button direction="right" (navigate)="navigatePeriod(1)"></app-arrow-button>
           }
         </div>
@@ -116,11 +115,11 @@
   </div>
 
   <!-- Time State Banner -->
-  @if (!isAtCurrentPeriod(activeScope)) {
+  @if (!store.isAtCurrentPeriod(store.activeScope())) {
     <app-time-banner
-      [periodLabel]="getCurrentPeriodLabel()"
-      [isPast]="isPastPeriod()"
-      [isFuture]="isFuturePeriod()"
+      [periodLabel]="store.getCurrentPeriodLabel()"
+      [isPast]="store.isPastPeriod()"
+      [isFuture]="store.isFuturePeriod()"
       (backToToday)="jumpToToday()">
     </app-time-banner>
   }
@@ -129,7 +128,7 @@
   @if (showTagManagement) {
     <div class="max-w-7xl mx-auto mb-6">
       <app-tag-management
-        [tags]="getAllTags()"
+        [tags]="store.globalTags()"
         (tagRenamed)="onTagRenamed($event)"
         (tagDeleted)="onTagDeleted($event)"
         (tagAdded)="onTagAdded($event)">
@@ -149,50 +148,50 @@
   <div class="max-w-7xl mx-auto mb-6">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-      <!-- Main Left Panel: Monday Tasks OR Quarterly Goals OR Yearly Goals (75% on large screens = 3/4 columns) -->
+      <!-- Main Left Panel -->
       <div class="lg:col-span-3">
         <!-- Daily Tasks View -->
         @if (!showYearlyGoals && !showQuarterlyGoals) {
           <app-daily-tasks
-            [tasks]="tasks"
-            [availableTags]="globalTags"
-            [currentDate]="currentPeriodKeys.day"
-            [isPast]="isPastPeriod()"
-            [isFuture]="isFuturePeriod()">
+            [tasks]="store.currentTasks()"
+            [availableTags]="store.globalTags()"
+            [currentDate]="store.currentPeriodKeys().day"
+            [isPast]="store.isPastPeriod()"
+            [isFuture]="store.isFuturePeriod()">
           </app-daily-tasks>
         }
 
         <!-- Quarterly Goals View -->
         @if (showQuarterlyGoals) {
           <app-quarterly-goals
-            [goals]="quarterlyGoals"
-            [availableTags]="globalTags"
-            [currentPeriodKey]="currentPeriodKeys.quarter"
-            [isPast]="isPastPeriod()"
-            [isFuture]="isFuturePeriod()">
+            [goals]="store.currentQuarterlyGoals()"
+            [availableTags]="store.globalTags()"
+            [currentPeriodKey]="store.currentPeriodKeys().quarter"
+            [isPast]="store.isPastPeriod()"
+            [isFuture]="store.isFuturePeriod()">
           </app-quarterly-goals>
         }
 
         <!-- Yearly Goals View -->
         @if (showYearlyGoals) {
           <app-yearly-goals
-            [goals]="yearlyGoals"
-            [availableTags]="globalTags"
-            [currentPeriodKey]="currentPeriodKeys.year"
-            [isPast]="isPastPeriod()"
-            [isFuture]="isFuturePeriod()">
+            [goals]="store.currentYearlyGoals()"
+            [availableTags]="store.globalTags()"
+            [currentPeriodKey]="store.currentPeriodKeys().year"
+            [isPast]="store.isPastPeriod()"
+            [isFuture]="store.isFuturePeriod()">
           </app-yearly-goals>
         }
       </div>
 
-      <!-- Right Sidebar: Weekly Goals (25% on large screens = 1/4 column) -->
+      <!-- Right Sidebar: Weekly Goals -->
       <div class="lg:col-span-1">
         <app-weekly-goals
-          [goals]="weeklyGoals"
-          [availableTags]="globalTags"
-          [currentPeriodKey]="currentPeriodKeys.week"
-          [isPast]="isPastPeriod()"
-          [isFuture]="isFuturePeriod()">
+          [goals]="store.currentWeeklyGoals()"
+          [availableTags]="store.globalTags()"
+          [currentPeriodKey]="store.currentPeriodKeys().week"
+          [isPast]="store.isPastPeriod()"
+          [isFuture]="store.isFuturePeriod()">
         </app-weekly-goals>
       </div>
     </div>

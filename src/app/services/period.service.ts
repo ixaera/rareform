@@ -6,6 +6,7 @@ import {
   addDays,
   addQuarters,
   addYears,
+  differenceInCalendarDays,
   format,
   startOfQuarter,
   endOfQuarter,
@@ -184,6 +185,36 @@ export class PeriodService {
   getMondayForWeek(weekKey: string): string {
     const monday = this.parsePeriodKey(weekKey, 'week');
     return format(monday, 'yyyy-MM-dd');
+  }
+
+  /**
+   * Get the day offset from today for a given date key
+   */
+  getDayOffsetForDateKey(dateKey: string): number {
+    const target = parseISO(dateKey);
+    return differenceInCalendarDays(target, this.today);
+  }
+
+  /**
+   * Get the week offset from this week for a given date key
+   */
+  getWeekOffsetForDateKey(dateKey: string): number {
+    const target = parseISO(dateKey);
+    const targetMonday = startOfISOWeek(target);
+    const todayMonday = startOfISOWeek(this.today);
+    return Math.round(differenceInCalendarDays(targetMonday, todayMonday) / 7);
+  }
+
+  /**
+   * Get all day keys (Mon-Sun) for a given week key
+   */
+  getDayKeysForWeek(weekKey: string): string[] {
+    const monday = this.parsePeriodKey(weekKey, 'week');
+    const keys: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      keys.push(format(addDays(monday, i), 'yyyy-MM-dd'));
+    }
+    return keys;
   }
 
   /**

@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { PlannerStoreService } from '../../services/planner-store.service';
 import { PeriodScope } from '../../services/period.service';
+import { UserService } from '../../services/user.service';
 import { DailyTasksComponent } from '../daily-tasks/daily-tasks';
 import { GoalListComponent } from '../goal-list/goal-list.component';
 import { TagManagementComponent } from '../tag-management/tag-management';
@@ -29,12 +30,13 @@ type ActivePanel = 'daily' | 'quarterly' | 'yearly' | 'tags' | 'analysis';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   readonly store = inject(PlannerStoreService);
+  private userService = inject(UserService);
 
-  title = 'Placeholder Planner Title';
+  title = '';
   motivationalText = 'Closers get coffee';
   bottomText = 'Some cool links and stuff here';
 
@@ -42,6 +44,12 @@ export class DashboardComponent {
 
   constructor() {
     this.store.initialize();
+  }
+
+  ngOnInit(): void {
+    this.userService.getUser().subscribe(user => {
+      this.title = user.plannerName;
+    });
   }
 
   // === View Toggle ===

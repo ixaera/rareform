@@ -1,10 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { of } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
 import { AuthService } from '../../services/auth.service';
 import { PlannerDataService } from '../../services/planner-data.service';
 import { MockPlannerDataService } from '../../services/mock-planner-data.service';
+import { UserService } from '../../services/user.service';
+import { MockUserService } from '../../services/mock-user.service';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -22,6 +25,7 @@ describe('DashboardComponent', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: Router, useValue: mockRouter },
         { provide: PlannerDataService, useClass: MockPlannerDataService },
+        { provide: UserService, useClass: MockUserService },
         provideNoopAnimations()
       ]
     }).compileComponents();
@@ -154,8 +158,8 @@ describe('DashboardComponent', () => {
   });
 
   describe('Initial State', () => {
-    it('should have correct title', () => {
-      expect(component.title).toBe('Placeholder Planner Title');
+    it('should have title populated from UserService', () => {
+      expect(component.title).toBe('Demo Planner');
     });
 
     it('should have store with default tags', () => {
@@ -196,6 +200,38 @@ describe('DashboardComponent', () => {
 
     it('should set active scope to week by default', () => {
       expect(component.store.activeScope()).toBe('week');
+    });
+  });
+
+  describe('Title from UserService', () => {
+    it('should set title to the plannerName returned by UserService', () => {
+      expect(component.title).toBe('Demo Planner');
+    });
+
+    it('should render the plannerName in the h1', () => {
+      fixture.detectChanges();
+      const h1: HTMLElement = fixture.nativeElement.querySelector('h1');
+      expect(h1.textContent?.trim()).toBe('Demo Planner');
+    });
+
+    it('should reflect a different plannerName when UserService returns one', () => {
+      const userService = TestBed.inject(UserService);
+      spyOn(userService, 'getUser').and.returnValue(of({ plannerName: 'My Real Planner' }));
+
+      component.ngOnInit();
+
+      expect(component.title).toBe('My Real Planner');
+    });
+
+    it('should update the rendered h1 when plannerName changes', () => {
+      const userService = TestBed.inject(UserService);
+      spyOn(userService, 'getUser').and.returnValue(of({ plannerName: 'My Real Planner' }));
+
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      const h1: HTMLElement = fixture.nativeElement.querySelector('h1');
+      expect(h1.textContent?.trim()).toBe('My Real Planner');
     });
   });
 

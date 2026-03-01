@@ -4,6 +4,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { routes } from './app.routes';
 import { PlannerDataService } from './services/planner-data.service';
 import { MockPlannerDataService } from './services/mock-planner-data.service';
+import { UserService } from './services/user.service';
+import { MockUserService } from './services/mock-user.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -11,6 +13,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimationsAsync(),
-    { provide: PlannerDataService, useClass: MockPlannerDataService }
+    { provide: PlannerDataService, useClass: MockPlannerDataService },
+    { provide: UserService, useClass: MockUserService }
   ]
 };

@@ -20,7 +20,7 @@ export class TagManagementComponent {
 
   createTag(): void {
     const tag = this.newTagInput.trim();
-    if (tag && tag.length <= 15 && !this.tags.includes(tag)) {
+    if (this.isValidTag(tag) && !this.tags.includes(tag)) {
       this.tagAdded.emit(tag);
       this.newTagInput = '';
     }
@@ -34,10 +34,14 @@ export class TagManagementComponent {
 
   saveTagEdit(oldTag: string): void {
     const newTag = this.editTagInput[oldTag]?.trim();
-    if (newTag && newTag.length <= 15 && newTag !== oldTag) {
+    if (newTag && this.isValidTag(newTag) && newTag !== oldTag) {
       this.tagRenamed.emit({ oldTag, newTag });
     }
     this.editingTag = null;
+  }
+
+  private isValidTag(tag: string): boolean {
+    return tag.length > 0 && tag.length <= 15;
   }
 
   cancelEdit(): void {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Task } from '../../models/task.interface';
 import { PlannerStoreService } from '../../services/planner-store.service';
+import { PeriodService } from '../../services/period.service';
 
 @Component({
   selector: 'app-daily-tasks',
@@ -12,6 +13,7 @@ import { PlannerStoreService } from '../../services/planner-store.service';
 })
 export class DailyTasksComponent {
   private store = inject(PlannerStoreService);
+  private periodService = inject(PeriodService);
 
   @Input() tasks: Task[] = [];
   @Input() availableTags: string[] = [];
@@ -99,16 +101,7 @@ export class DailyTasksComponent {
   }
 
   getDayTitle(): string {
-    if (!this.currentDate) {
-      return 'Today';
-    }
-    const [year, month, day] = this.currentDate.split('-').map(num => parseInt(num, 10));
-    const date = new Date(year, month - 1, day);
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    const dayName = days[date.getDay()];
-    const monthName = months[date.getMonth()];
-    return `${dayName}, ${monthName} ${day}`;
+    if (!this.currentDate) return 'Today';
+    return this.periodService.formatPeriodLabel(this.currentDate, 'day');
   }
 }

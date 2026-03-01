@@ -1,0 +1,101 @@
+<div [class]="cs.container">
+  <h2 [class]="cs.header">
+    {{ getTitle() }}
+  </h2>
+
+  <!-- Add New Goal Input -->
+  <div [class]="cs.addSection" (click)="stopPropagation($event)">
+    <div [class]="cs.addWrapper">
+      <input
+        type="text"
+        [(ngModel)]="newGoal"
+        (keyup.enter)="addGoal()"
+        placeholder="Add a new goal..."
+        [class]="cs.addInput"
+      />
+      <button (click)="addGoal()" [class]="cs.addButton">
+        Add Goal
+      </button>
+    </div>
+  </div>
+
+  <!-- Goals List -->
+  <div class="space-y-3">
+    @for (goal of goals; track goal.id) {
+      <div [class]="cs.item">
+        <!-- Goal Row -->
+        <div [class]="cs.goalRow">
+          <input
+            type="checkbox"
+            [id]="cs.idPrefix + goal.id"
+            [checked]="goal.completed"
+            (change)="toggleCompletion(goal)"
+            [class]="cs.checkbox"
+          />
+          <label
+            [for]="cs.idPrefix + goal.id"
+            [class]="getLabelClass(goal)">
+            {{ goal.text }}
+          </label>
+          <button
+            (click)="tagState.open(goal.id, $event)"
+            [class]="getTagBtnClass(goal.id)"
+            title="Add tag">
+            <svg xmlns="http://www.w3.org/2000/svg" [class]="cs.tagBtnIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Tags Display -->
+        @if (goal.tags && goal.tags.length > 0) {
+          <div (click)="stopPropagation($event)" [class]="cs.tagsWrapper">
+            @for (tag of goal.tags; track $index) {
+              <span [class]="cs.tagBadge">
+                {{ tag }}
+                <button
+                  (click)="removeTag(goal.id, $index)"
+                  [class]="cs.tagRemove"
+                  title="Remove tag">
+                  <svg xmlns="http://www.w3.org/2000/svg" [class]="cs.tagIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </span>
+            }
+          </div>
+        }
+
+        <!-- Tag Input with Autocomplete -->
+        @if (tagState.visible[goal.id]) {
+          <div (click)="stopPropagation($event)" [class]="cs.tagInputArea">
+            <div class="relative">
+              <input
+                type="text"
+                [(ngModel)]="tagState.inputValue[goal.id]"
+                (focus)="tagState.onFocus(goal.id)"
+                (input)="tagState.onChange(goal.id)"
+                (keyup.enter)="addTag(goal.id)"
+                placeholder="Search tags..."
+                [class]="cs.tagInput"
+              />
+              <!-- Autocomplete Dropdown -->
+              @if (tagState.dropdownOpen[goal.id] && getFilteredTags(goal.id).length > 0) {
+                <div [class]="cs.tagDropdown">
+                  @for (tag of getFilteredTags(goal.id); track tag) {
+                    <button
+                      (click)="selectTag(goal.id, tag)"
+                      [class]="cs.tagDropdownOption">
+                      {{ tag }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            <p [class]="cs.tagCount">{{ goal.tags.length || 0 }}/5 tags</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

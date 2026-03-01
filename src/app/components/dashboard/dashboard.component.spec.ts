@@ -36,118 +36,79 @@ describe('DashboardComponent', () => {
   });
 
   describe('View Toggle Logic', () => {
-    it('should initialize with all views hidden except daily tasks', () => {
-      expect(component.showYearlyGoals).toBe(false);
-      expect(component.showQuarterlyGoals).toBe(false);
-      expect(component.showTagManagement).toBe(false);
-      expect(component.showAnalysis).toBe(false);
+    it('should initialize with activePanel as daily', () => {
+      expect(component.activePanel).toBe('daily');
     });
 
-    describe('toggleYearlyGoals', () => {
-      it('should show yearly goals and hide other views', () => {
-        component.showQuarterlyGoals = true;
-        component.showTagManagement = true;
-        component.showAnalysis = true;
-
-        component.toggleYearlyGoals();
-
-        expect(component.showYearlyGoals).toBe(true);
-        expect(component.showQuarterlyGoals).toBe(false);
-        expect(component.showTagManagement).toBe(false);
-        expect(component.showAnalysis).toBe(false);
+    describe('togglePanel(yearly)', () => {
+      it('should set activePanel to yearly and reset others', () => {
+        component.activePanel = 'tags';
+        component.togglePanel('yearly');
+        expect(component.activePanel).toBe('yearly');
       });
 
-      it('should toggle yearly goals view off when called again', () => {
-        component.toggleYearlyGoals();
-        expect(component.showYearlyGoals).toBe(true);
+      it('should toggle yearly back to daily when called again', () => {
+        component.togglePanel('yearly');
+        expect(component.activePanel).toBe('yearly');
 
-        component.toggleYearlyGoals();
-        expect(component.showYearlyGoals).toBe(false);
+        component.togglePanel('yearly');
+        expect(component.activePanel).toBe('daily');
       });
     });
 
-    describe('toggleQuarterlyGoals', () => {
-      it('should show quarterly goals and hide other views', () => {
-        component.showYearlyGoals = true;
-        component.showTagManagement = true;
-        component.showAnalysis = true;
-
-        component.toggleQuarterlyGoals();
-
-        expect(component.showQuarterlyGoals).toBe(true);
-        expect(component.showYearlyGoals).toBe(false);
-        expect(component.showTagManagement).toBe(false);
-        expect(component.showAnalysis).toBe(false);
+    describe('togglePanel(quarterly)', () => {
+      it('should set activePanel to quarterly and reset others', () => {
+        component.activePanel = 'yearly';
+        component.togglePanel('quarterly');
+        expect(component.activePanel).toBe('quarterly');
       });
 
-      it('should toggle quarterly goals view off when called again', () => {
-        component.toggleQuarterlyGoals();
-        expect(component.showQuarterlyGoals).toBe(true);
+      it('should toggle quarterly back to daily when called again', () => {
+        component.togglePanel('quarterly');
+        expect(component.activePanel).toBe('quarterly');
 
-        component.toggleQuarterlyGoals();
-        expect(component.showQuarterlyGoals).toBe(false);
+        component.togglePanel('quarterly');
+        expect(component.activePanel).toBe('daily');
       });
     });
 
     describe('showDailyTasks', () => {
-      it('should hide all other views', () => {
-        component.showYearlyGoals = true;
-        component.showQuarterlyGoals = true;
-        component.showTagManagement = true;
-        component.showAnalysis = true;
-
+      it('should set activePanel to daily', () => {
+        component.activePanel = 'yearly';
         component.showDailyTasks();
-
-        expect(component.showYearlyGoals).toBe(false);
-        expect(component.showQuarterlyGoals).toBe(false);
-        expect(component.showTagManagement).toBe(false);
-        expect(component.showAnalysis).toBe(false);
+        expect(component.activePanel).toBe('daily');
       });
     });
 
-    describe('toggleTagManagement', () => {
-      it('should show tag management and hide other views', () => {
-        component.showYearlyGoals = true;
-        component.showQuarterlyGoals = true;
-        component.showAnalysis = true;
-
-        component.toggleTagManagement();
-
-        expect(component.showTagManagement).toBe(true);
-        expect(component.showYearlyGoals).toBe(false);
-        expect(component.showQuarterlyGoals).toBe(false);
-        expect(component.showAnalysis).toBe(false);
+    describe('togglePanel(tags)', () => {
+      it('should set activePanel to tags and reset others', () => {
+        component.activePanel = 'yearly';
+        component.togglePanel('tags');
+        expect(component.activePanel).toBe('tags');
       });
 
-      it('should toggle tag management view off when called again', () => {
-        component.toggleTagManagement();
-        expect(component.showTagManagement).toBe(true);
+      it('should toggle tags back to daily when called again', () => {
+        component.togglePanel('tags');
+        expect(component.activePanel).toBe('tags');
 
-        component.toggleTagManagement();
-        expect(component.showTagManagement).toBe(false);
+        component.togglePanel('tags');
+        expect(component.activePanel).toBe('daily');
       });
     });
 
-    describe('toggleAnalysis', () => {
-      it('should show analysis and hide other views', () => {
-        component.showYearlyGoals = true;
-        component.showQuarterlyGoals = true;
-        component.showTagManagement = true;
-
-        component.toggleAnalysis();
-
-        expect(component.showAnalysis).toBe(true);
-        expect(component.showYearlyGoals).toBe(false);
-        expect(component.showQuarterlyGoals).toBe(false);
-        expect(component.showTagManagement).toBe(false);
+    describe('togglePanel(analysis)', () => {
+      it('should set activePanel to analysis and reset others', () => {
+        component.activePanel = 'yearly';
+        component.togglePanel('analysis');
+        expect(component.activePanel).toBe('analysis');
       });
 
-      it('should toggle analysis view off when called again', () => {
-        component.toggleAnalysis();
-        expect(component.showAnalysis).toBe(true);
+      it('should toggle analysis back to daily when called again', () => {
+        component.togglePanel('analysis');
+        expect(component.activePanel).toBe('analysis');
 
-        component.toggleAnalysis();
-        expect(component.showAnalysis).toBe(false);
+        component.togglePanel('analysis');
+        expect(component.activePanel).toBe('daily');
       });
     });
   });
@@ -280,23 +241,20 @@ describe('DashboardComponent', () => {
         expect(component.store.activeScope()).toBe('day');
       });
 
-      it('should show daily tasks view when switching to day or week', () => {
-        component.showQuarterlyGoals = true;
+      it('should set activePanel to daily when switching to day or week', () => {
+        component.activePanel = 'quarterly';
         component.setActiveScope('day');
-        expect(component.showYearlyGoals).toBe(false);
-        expect(component.showQuarterlyGoals).toBe(false);
+        expect(component.activePanel).toBe('daily');
       });
 
-      it('should show quarterly goals when switching to quarter scope', () => {
+      it('should set activePanel to quarterly when switching to quarter scope', () => {
         component.setActiveScope('quarter');
-        expect(component.showQuarterlyGoals).toBe(true);
-        expect(component.showYearlyGoals).toBe(false);
+        expect(component.activePanel).toBe('quarterly');
       });
 
-      it('should show yearly goals when switching to year scope', () => {
+      it('should set activePanel to yearly when switching to year scope', () => {
         component.setActiveScope('year');
-        expect(component.showYearlyGoals).toBe(true);
-        expect(component.showQuarterlyGoals).toBe(false);
+        expect(component.activePanel).toBe('yearly');
       });
     });
 
@@ -390,8 +348,8 @@ describe('DashboardComponent', () => {
         const newWeekKey = component.store.currentPeriodKeys().week;
         expect(newWeekKey).not.toBe(initialWeekKey);
 
-        // The weekly-goals component should render the new week's title
-        const weeklyGoalsEl = fixture.nativeElement.querySelector('app-weekly-goals');
+        // The weekly goal-list should render the new week's title
+        const weeklyGoalsEl = fixture.nativeElement.querySelector('app-goal-list[data-scope="week"]');
         expect(weeklyGoalsEl).toBeTruthy();
         const heading = weeklyGoalsEl.querySelector('h2');
         expect(heading).toBeTruthy();

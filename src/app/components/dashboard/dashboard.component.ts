@@ -6,13 +6,13 @@ import { AuthService } from '../../services/auth.service';
 import { PlannerStoreService } from '../../services/planner-store.service';
 import { PeriodScope } from '../../services/period.service';
 import { DailyTasksComponent } from '../daily-tasks/daily-tasks';
-import { WeeklyGoalsComponent } from '../weekly-goals/weekly-goals';
-import { QuarterlyGoalsComponent } from '../quarterly-goals/quarterly-goals';
-import { YearlyGoalsComponent } from '../yearly-goals/yearly-goals';
+import { GoalListComponent } from '../goal-list/goal-list.component';
 import { TagManagementComponent } from '../tag-management/tag-management';
 import { AnalysisComponent } from '../analysis/analysis';
 import { ArrowButtonComponent } from '../time-navigation/arrow-button.component';
 import { TimeBannerComponent } from '../time-navigation/time-banner.component';
+
+type ActivePanel = 'daily' | 'quarterly' | 'yearly' | 'tags' | 'analysis';
 
 @Component({
   selector: 'app-dashboard',
@@ -20,9 +20,7 @@ import { TimeBannerComponent } from '../time-navigation/time-banner.component';
     CommonModule,
     FormsModule,
     DailyTasksComponent,
-    WeeklyGoalsComponent,
-    QuarterlyGoalsComponent,
-    YearlyGoalsComponent,
+    GoalListComponent,
     TagManagementComponent,
     AnalysisComponent,
     ArrowButtonComponent,
@@ -40,55 +38,20 @@ export class DashboardComponent {
   motivationalText = 'Closers get coffee';
   bottomText = 'Some cool links and stuff here';
 
-  // View toggle state (pure UI concerns)
-  showYearlyGoals = false;
-  showQuarterlyGoals = false;
-  showTagManagement = false;
-  showAnalysis = false;
+  activePanel: ActivePanel = 'daily';
 
   constructor() {
     this.store.initialize();
   }
 
-  // === View Toggles ===
+  // === View Toggle ===
 
-  toggleYearlyGoals(): void {
-    this.showYearlyGoals = !this.showYearlyGoals;
-    this.showQuarterlyGoals = false;
-    this.showTagManagement = false;
-    this.showAnalysis = false;
-  }
-
-  toggleQuarterlyGoals(): void {
-    this.showQuarterlyGoals = !this.showQuarterlyGoals;
-    this.showYearlyGoals = false;
-    this.showTagManagement = false;
-    this.showAnalysis = false;
+  togglePanel(panel: 'quarterly' | 'yearly' | 'tags' | 'analysis'): void {
+    this.activePanel = this.activePanel === panel ? 'daily' : panel;
   }
 
   showDailyTasks(): void {
-    this.showYearlyGoals = false;
-    this.showQuarterlyGoals = false;
-    this.showTagManagement = false;
-    this.showAnalysis = false;
-  }
-
-  toggleTagManagement(): void {
-    this.showTagManagement = !this.showTagManagement;
-    if (this.showTagManagement) {
-      this.showYearlyGoals = false;
-      this.showQuarterlyGoals = false;
-      this.showAnalysis = false;
-    }
-  }
-
-  toggleAnalysis(): void {
-    this.showAnalysis = !this.showAnalysis;
-    if (this.showAnalysis) {
-      this.showYearlyGoals = false;
-      this.showQuarterlyGoals = false;
-      this.showTagManagement = false;
-    }
+    this.activePanel = 'daily';
   }
 
   logout(): void {
@@ -102,13 +65,11 @@ export class DashboardComponent {
     this.store.setActiveScope(scope);
 
     if (scope === 'week' || scope === 'day') {
-      this.showDailyTasks();
+      this.activePanel = 'daily';
     } else if (scope === 'quarter') {
-      this.showQuarterlyGoals = true;
-      this.showYearlyGoals = false;
+      this.activePanel = 'quarterly';
     } else if (scope === 'year') {
-      this.showYearlyGoals = true;
-      this.showQuarterlyGoals = false;
+      this.activePanel = 'yearly';
     }
   }
 

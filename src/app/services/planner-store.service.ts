@@ -195,43 +195,39 @@ export class PlannerStoreService {
   // === Tag CRUD ===
 
   addTaskTag(taskId: number, tag: string): void {
-    const dateKey = this.currentPeriodKeys().day;
-    const tasks = this.taskCache().get(dateKey) ?? [];
-    const task = tasks.find(t => t.id === taskId);
-    if (task && task.tags && task.tags.length < 5 && !task.tags.includes(tag)) {
-      this.updateTask({ ...task, tags: [...task.tags, tag] });
-    }
+    this.updateTaskTags(taskId, tags =>
+      tags.length < 5 && !tags.includes(tag) ? [...tags, tag] : null
+    );
   }
 
   removeTaskTag(taskId: number, tagIndex: number): void {
-    const dateKey = this.currentPeriodKeys().day;
-    const tasks = this.taskCache().get(dateKey) ?? [];
-    const task = tasks.find(t => t.id === taskId);
-    if (task && task.tags) {
-      const newTags = [...task.tags];
-      newTags.splice(tagIndex, 1);
-      this.updateTask({ ...task, tags: newTags });
-    }
+    this.updateTaskTags(taskId, tags => tags.filter((_, i) => i !== tagIndex));
   }
 
   addGoalTag(goalId: number, scope: GoalScope, tag: string): void {
-    const periodKey = this.currentPeriodKeys()[scope];
-    const goals = this.goalCache().get(`${scope}:${periodKey}`) ?? [];
-    const goal = goals.find(g => g.id === goalId);
-    if (goal && goal.tags && goal.tags.length < 5 && !goal.tags.includes(tag)) {
-      this.updateGoal({ ...goal, tags: [...goal.tags, tag] });
-    }
+    this.updateGoalTags(goalId, scope, tags =>
+      tags.length < 5 && !tags.includes(tag) ? [...tags, tag] : null
+    );
   }
 
   removeGoalTag(goalId: number, scope: GoalScope, tagIndex: number): void {
+    this.updateGoalTags(goalId, scope, tags => tags.filter((_, i) => i !== tagIndex));
+  }
+
+  private updateTaskTags(taskId: number, updater: (tags: string[]) => string[] | null): void {
+    const dateKey = this.currentPeriodKeys().day;
+    const task = (this.taskCache().get(dateKey) ?? []).find(t => t.id === taskId);
+    if (!task) return;
+    const newTags = updater(task.tags);
+    if (newTags !== null) this.updateTask({ ...task, tags: newTags });
+  }
+
+  private updateGoalTags(goalId: number, scope: GoalScope, updater: (tags: string[]) => string[] | null): void {
     const periodKey = this.currentPeriodKeys()[scope];
-    const goals = this.goalCache().get(`${scope}:${periodKey}`) ?? [];
-    const goal = goals.find(g => g.id === goalId);
-    if (goal && goal.tags) {
-      const newTags = [...goal.tags];
-      newTags.splice(tagIndex, 1);
-      this.updateGoal({ ...goal, tags: newTags });
-    }
+    const goal = (this.goalCache().get(`${scope}:${periodKey}`) ?? []).find(g => g.id === goalId);
+    if (!goal) return;
+    const newTags = updater(goal.tags);
+    if (newTags !== null) this.updateGoal({ ...goal, tags: newTags });
   }
 
   // === Global Tag Operations ===

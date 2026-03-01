@@ -125,7 +125,7 @@
   }
 
   <!-- Tag Management View (Full Width) -->
-  @if (showTagManagement) {
+  @if (activePanel === 'tags') {
     <div class="max-w-7xl mx-auto mb-6">
       <app-tag-management
         [tags]="store.globalTags()"
@@ -137,21 +137,20 @@
   }
 
   <!-- Analysis View (Full Width) -->
-  @if (showAnalysis) {
+  @if (activePanel === 'analysis') {
     <div class="max-w-7xl mx-auto mb-6">
       <app-analysis></app-analysis>
     </div>
   }
 
   <!-- Main Content Area: Tasks and Goals -->
-  @if (!showTagManagement && !showAnalysis) {
+  @if (activePanel !== 'tags' && activePanel !== 'analysis') {
   <div class="max-w-7xl mx-auto mb-6">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
       <!-- Main Left Panel -->
       <div class="lg:col-span-3">
-        <!-- Daily Tasks View -->
-        @if (!showYearlyGoals && !showQuarterlyGoals) {
+        @if (activePanel === 'daily') {
           <app-daily-tasks
             [tasks]="store.currentTasks()"
             [availableTags]="store.globalTags()"
@@ -161,38 +160,42 @@
           </app-daily-tasks>
         }
 
-        <!-- Quarterly Goals View -->
-        @if (showQuarterlyGoals) {
-          <app-quarterly-goals
+        @if (activePanel === 'quarterly') {
+          <app-goal-list
+            data-scope="quarter"
+            [scope]="'quarter'"
             [goals]="store.currentQuarterlyGoals()"
             [availableTags]="store.globalTags()"
             [currentPeriodKey]="store.currentPeriodKeys().quarter"
             [isPast]="store.isPastPeriod()"
             [isFuture]="store.isFuturePeriod()">
-          </app-quarterly-goals>
+          </app-goal-list>
         }
 
-        <!-- Yearly Goals View -->
-        @if (showYearlyGoals) {
-          <app-yearly-goals
+        @if (activePanel === 'yearly') {
+          <app-goal-list
+            data-scope="year"
+            [scope]="'year'"
             [goals]="store.currentYearlyGoals()"
             [availableTags]="store.globalTags()"
             [currentPeriodKey]="store.currentPeriodKeys().year"
             [isPast]="store.isPastPeriod()"
             [isFuture]="store.isFuturePeriod()">
-          </app-yearly-goals>
+          </app-goal-list>
         }
       </div>
 
       <!-- Right Sidebar: Weekly Goals -->
       <div class="lg:col-span-1">
-        <app-weekly-goals
+        <app-goal-list
+          data-scope="week"
+          [scope]="'week'"
           [goals]="store.currentWeeklyGoals()"
           [availableTags]="store.globalTags()"
           [currentPeriodKey]="store.currentPeriodKeys().week"
           [isPast]="store.isPastPeriod()"
           [isFuture]="store.isFuturePeriod()">
-        </app-weekly-goals>
+        </app-goal-list>
       </div>
     </div>
   </div>
@@ -203,21 +206,21 @@
     <div class="bg-white border-4 border-violet-500 rounded-lg shadow-lg p-4">
       <div class="flex justify-center items-center gap-4">
         <button
-          (click)="toggleTagManagement()"
-          [class.bg-violet-500]="showTagManagement"
-          [class.text-white]="showTagManagement"
-          [class.bg-violet-100]="!showTagManagement"
-          [class.text-indigo-900]="!showTagManagement"
+          (click)="togglePanel('tags')"
+          [class.bg-violet-500]="activePanel === 'tags'"
+          [class.text-white]="activePanel === 'tags'"
+          [class.bg-violet-100]="activePanel !== 'tags'"
+          [class.text-indigo-900]="activePanel !== 'tags'"
           class="px-6 py-3 rounded-md hover:bg-violet-400 hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md text-lg font-semibold">
           Manage Tags
         </button>
         <span class="text-violet-400">|</span>
         <button
-          (click)="toggleAnalysis()"
-          [class.bg-indigo-500]="showAnalysis"
-          [class.text-white]="showAnalysis"
-          [class.bg-indigo-100]="!showAnalysis"
-          [class.text-indigo-900]="!showAnalysis"
+          (click)="togglePanel('analysis')"
+          [class.bg-indigo-500]="activePanel === 'analysis'"
+          [class.text-white]="activePanel === 'analysis'"
+          [class.bg-indigo-100]="activePanel !== 'analysis'"
+          [class.text-indigo-900]="activePanel !== 'analysis'"
           class="px-6 py-3 rounded-md hover:bg-indigo-400 hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md text-lg font-semibold">
           Analyze
         </button>

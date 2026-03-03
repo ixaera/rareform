@@ -198,8 +198,8 @@ describe('DashboardComponent', () => {
       expect(keys.year).toMatch(/^\d{4}$/);
     });
 
-    it('should set active scope to week by default', () => {
-      expect(component.store.activeScope()).toBe('week');
+    it('should set active scope to day by default', () => {
+      expect(component.store.activeScope()).toBe('day');
     });
   });
 
@@ -277,15 +277,51 @@ describe('DashboardComponent', () => {
         expect(component.store.activeScope()).toBe('day');
       });
 
-      it('should set activePanel to daily when switching to day or week', () => {
+      it('should set activePanel to daily when switching to day scope', () => {
         component.activePanel = 'quarterly';
         component.setActiveScope('day');
         expect(component.activePanel).toBe('daily');
       });
 
+      it('should set activePanel to weekly when switching to week scope', () => {
+        component.activePanel = 'daily';
+        component.setActiveScope('week');
+        expect(component.activePanel).toBe('weekly');
+      });
+
       it('should set activePanel to quarterly when switching to quarter scope', () => {
         component.setActiveScope('quarter');
         expect(component.activePanel).toBe('quarterly');
+      });
+
+      it('should sync year offset to match current quarter when switching to quarter scope', () => {
+        component.setActiveScope('quarter');
+        const quarterKey = component.store.currentPeriodKeys().quarter;
+        const expectedYear = parseInt(quarterKey.split('-Q')[0], 10);
+        const yearKey = component.store.currentPeriodKeys().year;
+        expect(parseInt(yearKey, 10)).toBe(expectedYear);
+      });
+
+      it('should update year offset when navigating quarters across year boundary', () => {
+        component.setActiveScope('quarter');
+
+        // Navigate far enough back to cross a year boundary
+        const currentYear = new Date().getFullYear();
+        let crossed = false;
+        for (let i = 0; i < 8; i++) {
+          component.navigatePeriod(-1);
+          const yearKey = component.store.currentPeriodKeys().year;
+          if (parseInt(yearKey, 10) < currentYear) {
+            crossed = true;
+            break;
+          }
+        }
+
+        expect(crossed).toBe(true);
+        const quarterKey = component.store.currentPeriodKeys().quarter;
+        const quarterYear = parseInt(quarterKey.split('-Q')[0], 10);
+        const yearKey = component.store.currentPeriodKeys().year;
+        expect(parseInt(yearKey, 10)).toBe(quarterYear);
       });
 
       it('should set activePanel to yearly when switching to year scope', () => {
@@ -353,10 +389,10 @@ describe('DashboardComponent', () => {
     // on the current week because the time-banner's @fadeSlideIn animation threw
     // NG05105 (missing animations provider), breaking Angular's rendering pipeline.
     describe('navigation rendering with time banner', () => {
-      it('should update daily-tasks heading when navigating one week forward', () => {
+      it('should update daily-tasks heading when navigating forward by day', () => {
         const initialDayKey = component.store.currentPeriodKeys().day;
 
-        component.setActiveScope('week');
+        component.setActiveScope('day');
         component.navigatePeriod(1);
         fixture.detectChanges();
 
@@ -372,6 +408,17 @@ describe('DashboardComponent', () => {
         const [, , initialDay] = initialDayKey.split('-').map((n: string) => parseInt(n, 10));
         // It should reflect the new period, not the old one
         expect(heading.textContent).not.toContain(` ${initialDay}`);
+      });
+
+      it('should show weekly goal-list as main panel when scope is week', () => {
+        component.setActiveScope('week');
+        fixture.detectChanges();
+
+        const weeklyMainEl = fixture.nativeElement.querySelector('app-goal-list[data-scope="week"]');
+        expect(weeklyMainEl).toBeTruthy();
+
+        const dailyTasksEl = fixture.nativeElement.querySelector('app-daily-tasks');
+        expect(dailyTasksEl).toBeFalsy();
       });
 
       it('should update weekly-goals heading when navigating one week forward', () => {

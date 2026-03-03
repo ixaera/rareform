@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, HostListener, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Goal } from '../../models/task.interface';
@@ -67,9 +67,9 @@ const SCOPE_STYLES: Record<GoalScope, ScopeStyle> = {
     container: 'bg-white border-2 border-purple-400 rounded-lg shadow-xl p-6 h-full',
     header: 'text-3xl font-bold text-purple-950 mb-6 pb-3 border-b-2 border-purple-200',
     addSection: 'mb-6',
-    addWrapper: 'flex gap-3',
-    addInput: 'flex-1 px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg',
-    addButton: 'px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg',
+    addWrapper: 'flex flex-col gap-2',
+    addInput: 'w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg',
+    addButton: 'w-full px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg',
     goalRow: 'flex items-start gap-3',
     item: 'p-4 rounded-lg hover:bg-purple-50 transition-colors duration-200 border border-purple-100',
     checkbox: 'mt-1 w-5 h-5 text-purple-600 border-purple-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer',
@@ -94,9 +94,9 @@ const SCOPE_STYLES: Record<GoalScope, ScopeStyle> = {
     container: 'bg-white border-2 border-violet-400 rounded-lg shadow-xl p-6 h-full',
     header: 'text-3xl font-bold text-violet-950 mb-6 pb-3 border-b-2 border-violet-200',
     addSection: 'mb-6',
-    addWrapper: 'flex gap-3',
-    addInput: 'flex-1 px-4 py-3 border-2 border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-lg',
-    addButton: 'px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg',
+    addWrapper: 'flex flex-col gap-2',
+    addInput: 'w-full px-4 py-3 border-2 border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-lg',
+    addButton: 'w-full px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg',
     goalRow: 'flex items-start gap-3',
     item: 'p-4 rounded-lg hover:bg-violet-50 transition-colors duration-200 border border-violet-100',
     checkbox: 'mt-1 w-5 h-5 text-violet-600 border-violet-300 rounded focus:ring-violet-500 focus:ring-2 cursor-pointer',
@@ -132,12 +132,17 @@ export class GoalListComponent {
   @Input() scope: GoalScope = 'week';
   @Input() goals: Goal[] = [];
   @Input() availableTags: string[] = [];
+  @Input() higherGoals: Goal[] = [];
   @Input() currentPeriodKey: string = '';
   @Input() isPast: boolean = false;
   @Input() isFuture: boolean = false;
 
   newGoal = '';
   readonly tagState = new TagInputState();
+
+  goalLinkVisible: { [goalId: number]: boolean } = {};
+  showGoalLinkDropdown: { [goalId: number]: boolean } = {};
+  newGoalLinkInput: { [goalId: number]: string } = {};
 
   get cs(): ScopeStyle {
     return SCOPE_STYLES[this.scope];
@@ -172,6 +177,58 @@ export class GoalListComponent {
 
   removeTag(goalId: number, tagIndex: number): void {
     this.store.removeGoalTag(goalId, this.scope, tagIndex);
+  }
+
+  showGoalLinker(goalId: number, event?: Event): void {
+    if (event) event.stopPropagation();
+    for (const id of Object.keys(this.goalLinkVisible)) {
+      const numId = Number(id);
+      if (numId !== goalId && this.goalLinkVisible[numId]) {
+        this.goalLinkVisible[numId] = false;
+        this.newGoalLinkInput[numId] = '';
+        this.showGoalLinkDropdown[numId] = false;
+      }
+    }
+    this.goalLinkVisible[goalId] = !this.goalLinkVisible[goalId];
+    if (this.goalLinkVisible[goalId]) {
+      this.showGoalLinkDropdown[goalId] = true;
+    }
+  }
+
+  getFilteredHigherGoals(goalId: number): Goal[] {
+    const goal = this.goals.find(g => g.id === goalId);
+    const linkedIds = goal?.goalIds ?? [];
+    const searchTerm = this.newGoalLinkInput[goalId]?.toLowerCase() || '';
+    return this.higherGoals.filter(g =>
+      !linkedIds.includes(g.id) &&
+      g.text.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  getLinkedHigherGoals(goal: Goal): Goal[] {
+    const ids = goal.goalIds ?? [];
+    return ids.map(id => this.higherGoals.find(g => g.id === id)).filter((g): g is Goal => !!g);
+  }
+
+  selectHigherGoal(goalId: number, targetGoalId: number): void {
+    this.store.linkGoalToGoal(goalId, targetGoalId, this.scope);
+    this.newGoalLinkInput[goalId] = '';
+    this.showGoalLinkDropdown[goalId] = false;
+  }
+
+  unlinkHigherGoal(goalId: number, targetGoalId: number): void {
+    this.store.unlinkGoalFromGoal(goalId, targetGoalId, this.scope);
+  }
+
+  @HostListener('document:click')
+  closeAllDropdowns(): void {
+    this.tagState.closeAll();
+    for (const id of Object.keys(this.goalLinkVisible)) {
+      const numId = Number(id);
+      this.goalLinkVisible[numId] = false;
+      this.showGoalLinkDropdown[numId] = false;
+      this.newGoalLinkInput[numId] = '';
+    }
   }
 
   stopPropagation(event: Event): void {

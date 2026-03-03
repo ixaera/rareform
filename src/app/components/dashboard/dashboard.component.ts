@@ -13,7 +13,7 @@ import { AnalysisComponent } from '../analysis/analysis';
 import { ArrowButtonComponent } from '../time-navigation/arrow-button.component';
 import { TimeBannerComponent } from '../time-navigation/time-banner.component';
 
-type ActivePanel = 'daily' | 'quarterly' | 'yearly' | 'tags' | 'analysis';
+type ActivePanel = 'daily' | 'weekly' | 'quarterly' | 'yearly' | 'tags' | 'analysis';
 
 @Component({
   selector: 'app-dashboard',
@@ -72,8 +72,10 @@ export class DashboardComponent implements OnInit {
   setActiveScope(scope: PeriodScope): void {
     this.store.setActiveScope(scope);
 
-    if (scope === 'week' || scope === 'day') {
+    if (scope === 'day') {
       this.activePanel = 'daily';
+    } else if (scope === 'week') {
+      this.activePanel = 'weekly';
     } else if (scope === 'quarter') {
       this.activePanel = 'quarterly';
     } else if (scope === 'year') {

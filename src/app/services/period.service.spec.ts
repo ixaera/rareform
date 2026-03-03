@@ -253,6 +253,31 @@ describe('PeriodService', () => {
     });
   });
 
+  describe('getYearOffsetForQuarterKey', () => {
+    it('should return 0 for the current year quarter', () => {
+      const currentQuarter = service.getCurrentPeriodKey('quarter');
+      expect(service.getYearOffsetForQuarterKey(currentQuarter)).toBe(0);
+    });
+
+    it('should return -1 for a quarter in the previous year', () => {
+      const prevYearQ1 = `${new Date().getFullYear() - 1}-Q1`;
+      expect(service.getYearOffsetForQuarterKey(prevYearQ1)).toBe(-1);
+    });
+
+    it('should return 1 for a quarter in the next year', () => {
+      const nextYearQ1 = `${new Date().getFullYear() + 1}-Q1`;
+      expect(service.getYearOffsetForQuarterKey(nextYearQ1)).toBe(1);
+    });
+
+    it('should work for any quarter within the same year', () => {
+      const year = new Date().getFullYear();
+      expect(service.getYearOffsetForQuarterKey(`${year}-Q1`)).toBe(0);
+      expect(service.getYearOffsetForQuarterKey(`${year}-Q2`)).toBe(0);
+      expect(service.getYearOffsetForQuarterKey(`${year}-Q3`)).toBe(0);
+      expect(service.getYearOffsetForQuarterKey(`${year}-Q4`)).toBe(0);
+    });
+  });
+
   describe('edge cases', () => {
     it('should handle leap years correctly', () => {
       const leapDay = '2024-02-29';

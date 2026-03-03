@@ -96,7 +96,7 @@ describe('GoalListComponent', () => {
     beforeEach(() => {
       setup('week');
       component.goals = [
-        { id: 1, text: 'Goal 1', completed: false, tags: ['survive', 'create'], scope: 'week', periodKey: '2026-W08', createdAt: '', updatedAt: '' }
+        { id: 1, text: 'Goal 1', completed: false, tags: ['survive', 'create'], goalIds: [], scope: 'week', periodKey: '2026-W08', createdAt: '', updatedAt: '' }
       ];
     });
 
@@ -135,8 +135,8 @@ describe('GoalListComponent', () => {
     beforeEach(() => {
       setup('week');
       component.goals = [
-        { id: 1, text: 'Goal 1', completed: false, tags: [], scope: 'week', periodKey: '2026-W08', createdAt: '', updatedAt: '' },
-        { id: 2, text: 'Goal 2', completed: false, tags: [], scope: 'week', periodKey: '2026-W08', createdAt: '', updatedAt: '' }
+        { id: 1, text: 'Goal 1', completed: false, tags: [], goalIds: [], scope: 'week', periodKey: '2026-W08', createdAt: '', updatedAt: '' },
+        { id: 2, text: 'Goal 2', completed: false, tags: [], goalIds: [], scope: 'week', periodKey: '2026-W08', createdAt: '', updatedAt: '' }
       ];
     });
 
@@ -244,16 +244,48 @@ describe('GoalListComponent', () => {
     });
   });
 
+  describe('Add section layout', () => {
+    it('should use stacked (flex-col) layout for week scope', () => {
+      setup('week');
+      expect(component.cs.addWrapper).toContain('flex-col');
+    });
+
+    it('should use stacked (flex-col) layout for quarter scope', () => {
+      setup('quarter');
+      expect(component.cs.addWrapper).toContain('flex-col');
+    });
+
+    it('should use stacked (flex-col) layout for year scope', () => {
+      setup('year');
+      expect(component.cs.addWrapper).toContain('flex-col');
+    });
+
+    it('should use full-width button for week scope', () => {
+      setup('week');
+      expect(component.cs.addButton).toContain('w-full');
+    });
+
+    it('should use full-width button for quarter scope', () => {
+      setup('quarter');
+      expect(component.cs.addButton).toContain('w-full');
+    });
+
+    it('should use full-width button for year scope', () => {
+      setup('year');
+      expect(component.cs.addButton).toContain('w-full');
+    });
+  });
+
   describe('getLabelClass', () => {
     beforeEach(() => setup('week'));
 
     it('should add line-through for completed goals', () => {
-      const goal: Goal = { id: 1, text: '', completed: true, tags: [], scope: 'week', periodKey: '', createdAt: '', updatedAt: '' };
+      const goal: Goal = { id: 1, text: '', completed: true, tags: [], goalIds: [], scope: 'week', periodKey: '', createdAt: '', updatedAt: '' };
       expect(component.getLabelClass(goal)).toContain('line-through');
     });
 
     it('should not add line-through for incomplete goals', () => {
-      const goal: Goal = { id: 1, text: '', completed: false, tags: [], scope: 'week', periodKey: '', createdAt: '', updatedAt: '' };
+      const goal: Goal = { id: 1, text: '', completed: false, tags: [], goalIds: [], scope: 'week', periodKey: '', createdAt: '', updatedAt: '' };
       expect(component.getLabelClass(goal)).not.toContain('line-through');
     });
   });

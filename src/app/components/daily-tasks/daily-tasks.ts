@@ -1,7 +1,7 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, HostListener, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Task } from '../../models/task.interface';
+import { Task, Goal } from '../../models/task.interface';
 import { PlannerStoreService } from '../../services/planner-store.service';
 import { PeriodService } from '../../services/period.service';
 
@@ -17,6 +17,7 @@ export class DailyTasksComponent {
 
   @Input() tasks: Task[] = [];
   @Input() availableTags: string[] = [];
+  @Input() allGoals: Goal[] = [];
   @Input() currentDate: string = '';
   @Input() isPast: boolean = false;
   @Input() isFuture: boolean = false;
@@ -25,6 +26,10 @@ export class DailyTasksComponent {
   newTaskTagInput: { [taskId: number]: string } = {};
   showTagDropdown: { [taskId: number]: boolean } = {};
   tagInputVisible: { [taskId: number]: boolean } = {};
+
+  goalInputVisible: { [taskId: number]: boolean } = {};
+  showGoalDropdown: { [taskId: number]: boolean } = {};
+  newGoalInput: { [taskId: number]: string } = {};
 
   addTask(): void {
     if (this.newTask.trim()) {
@@ -88,6 +93,67 @@ export class DailyTasksComponent {
 
   removeTaskTag(taskId: number, tagIndex: number): void {
     this.store.removeTaskTag(taskId, tagIndex);
+  }
+
+  showGoalPicker(taskId: number, event?: Event): void {
+    if (event) event.stopPropagation();
+    for (const id of Object.keys(this.goalInputVisible)) {
+      const numId = Number(id);
+      if (numId !== taskId && this.goalInputVisible[numId]) {
+        this.goalInputVisible[numId] = false;
+        this.newGoalInput[numId] = '';
+        this.showGoalDropdown[numId] = false;
+      }
+    }
+    this.goalInputVisible[taskId] = !this.goalInputVisible[taskId];
+    if (this.goalInputVisible[taskId]) {
+      this.showGoalDropdown[taskId] = true;
+    }
+  }
+
+  getFilteredGoals(taskId: number): Goal[] {
+    const task = this.tasks.find(t => t.id === taskId);
+    const linkedIds = task?.goalIds ?? [];
+    const searchTerm = this.newGoalInput[taskId]?.toLowerCase() || '';
+    return this.allGoals.filter(g =>
+      !linkedIds.includes(g.id) &&
+      g.text.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  getLinkedGoals(task: Task): Goal[] {
+    const ids = task.goalIds ?? [];
+    return ids.map(id => this.allGoals.find(g => g.id === id)).filter((g): g is Goal => !!g);
+  }
+
+  selectGoal(taskId: number, goalId: number): void {
+    this.store.linkGoalToTask(taskId, goalId);
+    this.newGoalInput[taskId] = '';
+    this.showGoalDropdown[taskId] = false;
+  }
+
+  unlinkGoal(taskId: number, goalId: number): void {
+    this.store.unlinkGoalFromTask(taskId, goalId);
+  }
+
+  scopeLabel(scope: string): string {
+    return scope === 'week' ? 'W' : scope === 'quarter' ? 'Q' : 'Y';
+  }
+
+  @HostListener('document:click')
+  closeAllDropdowns(): void {
+    for (const id of Object.keys(this.tagInputVisible)) {
+      const numId = Number(id);
+      this.tagInputVisible[numId] = false;
+      this.showTagDropdown[numId] = false;
+      this.newTaskTagInput[numId] = '';
+    }
+    for (const id of Object.keys(this.goalInputVisible)) {
+      const numId = Number(id);
+      this.goalInputVisible[numId] = false;
+      this.showGoalDropdown[numId] = false;
+      this.newGoalInput[numId] = '';
+    }
   }
 
   stopPropagation(event: Event): void {

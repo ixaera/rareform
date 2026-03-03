@@ -45,6 +45,20 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
           </button>
+          @if (higherGoals.length > 0) {
+            <button
+              (click)="showGoalLinker(goal.id, $event)"
+              [class.bg-violet-500]="goalLinkVisible[goal.id]"
+              [class.text-white]="goalLinkVisible[goal.id]"
+              [class.bg-violet-100]="!goalLinkVisible[goal.id]"
+              [class.text-violet-700]="!goalLinkVisible[goal.id]"
+              [class]="cs.tagBtnBase"
+              title="Link to higher goal">
+              <svg xmlns="http://www.w3.org/2000/svg" [class]="cs.tagBtnIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          }
         </div>
 
         <!-- Tags Display -->
@@ -63,6 +77,52 @@
                 </button>
               </span>
             }
+          </div>
+        }
+
+        <!-- Linked Higher Goals Display -->
+        @if (getLinkedHigherGoals(goal).length > 0) {
+          <div (click)="stopPropagation($event)" [class]="cs.tagsWrapper">
+            @for (hGoal of getLinkedHigherGoals(goal); track hGoal.id) {
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-100 text-violet-900 border border-violet-300 rounded-full text-xs font-medium">
+                {{ hGoal.text }}
+                <button
+                  (click)="unlinkHigherGoal(goal.id, hGoal.id)"
+                  [class]="cs.tagRemove"
+                  title="Unlink goal">
+                  <svg xmlns="http://www.w3.org/2000/svg" [class]="cs.tagIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </span>
+            }
+          </div>
+        }
+
+        <!-- Higher Goal Picker -->
+        @if (goalLinkVisible[goal.id]) {
+          <div (click)="stopPropagation($event)" [class]="cs.tagInputArea">
+            <div class="relative">
+              <input
+                type="text"
+                [(ngModel)]="newGoalLinkInput[goal.id]"
+                (focus)="showGoalLinkDropdown[goal.id] = true"
+                (input)="showGoalLinkDropdown[goal.id] = true"
+                placeholder="Search higher goals..."
+                [class]="cs.tagInput"
+              />
+              @if (showGoalLinkDropdown[goal.id] && getFilteredHigherGoals(goal.id).length > 0) {
+                <div [class]="cs.tagDropdown">
+                  @for (hGoal of getFilteredHigherGoals(goal.id); track hGoal.id) {
+                    <button
+                      (click)="selectHigherGoal(goal.id, hGoal.id)"
+                      [class]="cs.tagDropdownOption">
+                      {{ hGoal.text }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
           </div>
         }
 

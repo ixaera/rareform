@@ -10,7 +10,7 @@ export class PlannerStoreService {
   private periodService = inject(PeriodService);
 
   // === Navigation state ===
-  readonly activeScope = signal<PeriodScope>('week');
+  readonly activeScope = signal<PeriodScope>('day');
   readonly periodOffsets = signal<Record<PeriodScope, number>>({
     day: 0, week: 0, quarter: 0, year: 0
   });
@@ -56,6 +56,17 @@ export class PlannerStoreService {
 
   readonly isLoading = computed(() => this.loadingKeys().size > 0);
 
+  readonly allCurrentGoals = computed(() => [
+    ...this.currentWeeklyGoals(),
+    ...this.currentQuarterlyGoals(),
+    ...this.currentYearlyGoals(),
+  ]);
+
+  readonly currentQuarterAndYearGoals = computed(() => [
+    ...this.currentQuarterlyGoals(),
+    ...this.currentYearlyGoals(),
+  ]);
+
   // === Initialization ===
 
   initialize(): void {
@@ -91,6 +102,8 @@ export class PlannerStoreService {
         this.applySyncWeekToDay(updated);
       } else if (scope === 'week') {
         this.applySyncDayToWeek(updated);
+      } else if (scope === 'quarter') {
+        this.applySyncYearToQuarter(updated);
       }
       return updated;
     });
@@ -110,6 +123,8 @@ export class PlannerStoreService {
         this.applySyncWeekToDay(updated);
       } else if (scope === 'week') {
         this.applySyncDayToWeek(updated);
+      } else if (scope === 'quarter') {
+        this.applySyncYearToQuarter(updated);
       }
 
       return updated;
@@ -129,7 +144,7 @@ export class PlannerStoreService {
 
   addTask(text: string): void {
     const dateKey = this.currentPeriodKeys().day;
-    this.dataService.addTask({ text, completed: false, tags: [], date: dateKey }).subscribe(task => {
+    this.dataService.addTask({ text, completed: false, tags: [], goalIds: [], date: dateKey }).subscribe(task => {
       this.updateTaskCacheEntry(dateKey, tasks => [...tasks, task]);
     });
   }
@@ -162,7 +177,7 @@ export class PlannerStoreService {
 
   addGoal(text: string, scope: GoalScope): void {
     const periodKey = this.currentPeriodKeys()[scope];
-    this.dataService.addGoal({ text, completed: false, tags: [], scope, periodKey }).subscribe(goal => {
+    this.dataService.addGoal({ text, completed: false, tags: [], goalIds: [], scope, periodKey }).subscribe(goal => {
       this.updateGoalCacheEntry(scope, periodKey, goals => [...goals, goal]);
     });
   }
@@ -204,6 +219,16 @@ export class PlannerStoreService {
     this.updateTaskTags(taskId, tags => tags.filter((_, i) => i !== tagIndex));
   }
 
+  linkGoalToTask(taskId: number, goalId: number): void {
+    this.updateTaskGoals(taskId, ids =>
+      ids.includes(goalId) ? null : [...ids, goalId]
+    );
+  }
+
+  unlinkGoalFromTask(taskId: number, goalId: number): void {
+    this.updateTaskGoals(taskId, ids => ids.filter(id => id !== goalId));
+  }
+
   addGoalTag(goalId: number, scope: GoalScope, tag: string): void {
     this.updateGoalTags(goalId, scope, tags =>
       tags.length < 5 && !tags.includes(tag) ? [...tags, tag] : null
@@ -228,6 +253,32 @@ export class PlannerStoreService {
     if (!goal) return;
     const newTags = updater(goal.tags);
     if (newTags !== null) this.updateGoal({ ...goal, tags: newTags });
+  }
+
+  private updateTaskGoals(taskId: number, updater: (ids: number[]) => number[] | null): void {
+    const dateKey = this.currentPeriodKeys().day;
+    const task = (this.taskCache().get(dateKey) ?? []).find(t => t.id === taskId);
+    if (!task) return;
+    const newIds = updater(task.goalIds ?? []);
+    if (newIds !== null) this.updateTask({ ...task, goalIds: newIds });
+  }
+
+  linkGoalToGoal(goalId: number, targetGoalId: number, scope: GoalScope): void {
+    this.updateGoalGoals(goalId, scope, ids =>
+      ids.includes(targetGoalId) ? null : [...ids, targetGoalId]
+    );
+  }
+
+  unlinkGoalFromGoal(goalId: number, targetGoalId: number, scope: GoalScope): void {
+    this.updateGoalGoals(goalId, scope, ids => ids.filter(id => id !== targetGoalId));
+  }
+
+  private updateGoalGoals(goalId: number, scope: GoalScope, updater: (ids: number[]) => number[] | null): void {
+    const periodKey = this.currentPeriodKeys()[scope];
+    const goal = (this.goalCache().get(`${scope}:${periodKey}`) ?? []).find(g => g.id === goalId);
+    if (!goal) return;
+    const newIds = updater(goal.goalIds ?? []);
+    if (newIds !== null) this.updateGoal({ ...goal, goalIds: newIds });
   }
 
   // === Global Tag Operations ===
@@ -439,6 +490,12 @@ export class PlannerStoreService {
     const weekKey = this.periodService.getPeriodKeyFromOffset(offsets.week, 'week');
     const mondayKey = this.periodService.getMondayForWeek(weekKey);
     offsets.day = this.periodService.getDayOffsetForDateKey(mondayKey);
+  }
+
+  /** Mutates the offsets object in-place: sets year offset to match current quarter's year */
+  private applySyncYearToQuarter(offsets: Record<PeriodScope, number>): void {
+    const quarterKey = this.periodService.getPeriodKeyFromOffset(offsets.quarter, 'quarter');
+    offsets.year = this.periodService.getYearOffsetForQuarterKey(quarterKey);
   }
 
   // === Private: Refresh Caches ===

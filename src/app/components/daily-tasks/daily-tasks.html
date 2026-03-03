@@ -54,6 +54,18 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
           </button>
+          <button
+            (click)="showGoalPicker(task.id, $event)"
+            [class.bg-violet-500]="goalInputVisible[task.id]"
+            [class.text-white]="goalInputVisible[task.id]"
+            [class.bg-violet-100]="!goalInputVisible[task.id]"
+            [class.text-violet-700]="!goalInputVisible[task.id]"
+            class="ml-1 w-8 h-8 flex items-center justify-center hover:bg-violet-200 rounded-full transition-colors duration-200 shadow-sm hover:shadow-md"
+            title="Link goal">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </button>
         </div>
 
         <!-- Tags Display -->
@@ -72,6 +84,54 @@
                 </button>
               </span>
             }
+          </div>
+        }
+
+        <!-- Linked Goals Display -->
+        @if (getLinkedGoals(task).length > 0) {
+          <div (click)="stopPropagation($event)" class="flex flex-wrap gap-2 mt-2 ml-8">
+            @for (goal of getLinkedGoals(task); track goal.id) {
+              <span class="inline-flex items-center gap-1 px-3 py-1 bg-violet-100 text-violet-900 border border-violet-300 rounded-full text-sm font-medium">
+                <span class="text-xs font-bold text-violet-500">{{ scopeLabel(goal.scope) }}</span>
+                {{ goal.text }}
+                <button
+                  (click)="unlinkGoal(task.id, goal.id)"
+                  class="ml-1 hover:bg-violet-200 rounded-full p-0.5 transition-colors duration-200"
+                  title="Unlink goal">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </span>
+            }
+          </div>
+        }
+
+        <!-- Goal Picker -->
+        @if (goalInputVisible[task.id]) {
+          <div (click)="stopPropagation($event)" class="mt-2 ml-8 relative">
+            <div class="relative">
+              <input
+                type="text"
+                [(ngModel)]="newGoalInput[task.id]"
+                (focus)="showGoalDropdown[task.id] = true"
+                (input)="showGoalDropdown[task.id] = true"
+                placeholder="Search goals..."
+                class="w-full px-3 py-2 border-2 border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
+              />
+              @if (showGoalDropdown[task.id] && getFilteredGoals(task.id).length > 0) {
+                <div class="absolute z-10 w-full mt-1 bg-white border-2 border-violet-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  @for (goal of getFilteredGoals(task.id); track goal.id) {
+                    <button
+                      (click)="selectGoal(task.id, goal.id)"
+                      class="w-full text-left px-3 py-2 hover:bg-violet-50 transition-colors duration-150 text-sm border-b border-violet-100 last:border-b-0 flex items-center gap-2">
+                      <span class="text-xs font-bold text-violet-400 w-4 shrink-0">{{ scopeLabel(goal.scope) }}</span>
+                      {{ goal.text }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
           </div>
         }
 

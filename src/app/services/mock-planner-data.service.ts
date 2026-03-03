@@ -57,36 +57,36 @@ export class MockPlannerDataService extends PlannerDataService {
 
   // Hard-coded "current period" seed data — shown for today / this week / this quarter / this year
   private seedTasks: Omit<Task, 'date' | 'createdAt' | 'updatedAt'>[] = [
-    { id: 1, text: 'Review Q1 strategy documents and prepare feedback', completed: false, tags: [] },
-    { id: 2, text: 'Schedule team standup for Tuesday morning', completed: true, tags: [] },
-    { id: 3, text: 'Update project timeline in tracking system', completed: false, tags: [] },
-    { id: 4, text: 'Respond to client emails and schedule follow-up calls', completed: false, tags: [] },
-    { id: 5, text: 'Complete code review for PR #245', completed: true, tags: [] },
-    { id: 6, text: 'Prepare slides for Wednesday presentation', completed: false, tags: [] }
+    { id: 1, text: 'Review Q1 strategy documents and prepare feedback', completed: false, tags: [], goalIds: [] },
+    { id: 2, text: 'Schedule team standup for Tuesday morning', completed: true, tags: [], goalIds: [] },
+    { id: 3, text: 'Update project timeline in tracking system', completed: false, tags: [], goalIds: [] },
+    { id: 4, text: 'Respond to client emails and schedule follow-up calls', completed: false, tags: [], goalIds: [] },
+    { id: 5, text: 'Complete code review for PR #245', completed: true, tags: [], goalIds: [] },
+    { id: 6, text: 'Prepare slides for Wednesday presentation', completed: false, tags: [], goalIds: [] }
   ];
 
   private seedWeeklyGoals: Omit<Goal, 'scope' | 'periodKey' | 'createdAt' | 'updatedAt'>[] = [
-    { id: 101, text: 'Ship feature X to production', completed: false, tags: [] },
-    { id: 102, text: 'Complete 3 code reviews', completed: true, tags: [] },
-    { id: 103, text: 'Finalize Q1 roadmap', completed: false, tags: [] },
-    { id: 104, text: 'Reduce technical debt by 20%', completed: false, tags: [] },
-    { id: 105, text: 'Improve test coverage to 85%', completed: false, tags: [] }
+    { id: 101, text: 'Ship feature X to production', completed: false, tags: [], goalIds: [] },
+    { id: 102, text: 'Complete 3 code reviews', completed: true, tags: [], goalIds: [] },
+    { id: 103, text: 'Finalize Q1 roadmap', completed: false, tags: [], goalIds: [] },
+    { id: 104, text: 'Reduce technical debt by 20%', completed: false, tags: [], goalIds: [] },
+    { id: 105, text: 'Improve test coverage to 85%', completed: false, tags: [], goalIds: [] }
   ];
 
   private seedQuarterlyGoals: Omit<Goal, 'scope' | 'periodKey' | 'createdAt' | 'updatedAt'>[] = [
-    { id: 201, text: 'Complete product roadmap for Q1', completed: false, tags: [] },
-    { id: 202, text: 'Hire 3 engineers', completed: false, tags: [] },
-    { id: 203, text: 'Reach 10k monthly active users', completed: true, tags: [] },
-    { id: 204, text: 'Implement analytics dashboard', completed: false, tags: [] },
-    { id: 205, text: 'Launch beta testing program', completed: false, tags: [] }
+    { id: 201, text: 'Complete product roadmap for Q1', completed: false, tags: [], goalIds: [] },
+    { id: 202, text: 'Hire 3 engineers', completed: false, tags: [], goalIds: [] },
+    { id: 203, text: 'Reach 10k monthly active users', completed: true, tags: [], goalIds: [] },
+    { id: 204, text: 'Implement analytics dashboard', completed: false, tags: [], goalIds: [] },
+    { id: 205, text: 'Launch beta testing program', completed: false, tags: [], goalIds: [] }
   ];
 
   private seedYearlyGoals: Omit<Goal, 'scope' | 'periodKey' | 'createdAt' | 'updatedAt'>[] = [
-    { id: 301, text: 'Launch 3 major product features', completed: false, tags: [] },
-    { id: 302, text: 'Grow user base by 50%', completed: false, tags: [] },
-    { id: 303, text: 'Achieve $1M ARR', completed: false, tags: [] },
-    { id: 304, text: 'Build and scale engineering team to 10 people', completed: false, tags: [] },
-    { id: 305, text: 'Establish thought leadership with 12 blog posts', completed: false, tags: [] }
+    { id: 301, text: 'Launch 3 major product features', completed: false, tags: [], goalIds: [] },
+    { id: 302, text: 'Grow user base by 50%', completed: false, tags: [], goalIds: [] },
+    { id: 303, text: 'Achieve $1M ARR', completed: false, tags: [], goalIds: [] },
+    { id: 304, text: 'Build and scale engineering team to 10 people', completed: false, tags: [], goalIds: [] },
+    { id: 305, text: 'Establish thought leadership with 12 blog posts', completed: false, tags: [], goalIds: [] }
   ];
 
   constructor() {
@@ -365,6 +365,7 @@ export class MockPlannerDataService extends PlannerDataService {
         text,
         completed: isPast ? Math.random() > 0.3 : false,
         tags: [],
+        goalIds: [],
         date: dateKey,
         createdAt: new Date(dateKey).toISOString(),
         updatedAt: new Date(dateKey).toISOString()
@@ -384,6 +385,7 @@ export class MockPlannerDataService extends PlannerDataService {
         text: goalTexts[i],
         completed: isPast ? Math.random() > 0.4 : false,
         tags: [],
+        goalIds: [],
         scope,
         periodKey,
         createdAt: new Date().toISOString(),

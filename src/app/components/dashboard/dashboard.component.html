@@ -149,15 +149,29 @@
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
       <!-- Main Left Panel -->
-      <div class="lg:col-span-3">
+      <div [class]="activePanel === 'yearly' ? 'lg:col-span-4' : 'lg:col-span-3'">
         @if (activePanel === 'daily') {
           <app-daily-tasks
             [tasks]="store.currentTasks()"
             [availableTags]="store.globalTags()"
+            [allGoals]="store.allCurrentGoals()"
             [currentDate]="store.currentPeriodKeys().day"
             [isPast]="store.isPastPeriod()"
             [isFuture]="store.isFuturePeriod()">
           </app-daily-tasks>
+        }
+
+        @if (activePanel === 'weekly') {
+          <app-goal-list
+            data-scope="week"
+            [scope]="'week'"
+            [goals]="store.currentWeeklyGoals()"
+            [availableTags]="store.globalTags()"
+            [higherGoals]="store.currentQuarterAndYearGoals()"
+            [currentPeriodKey]="store.currentPeriodKeys().week"
+            [isPast]="store.isPastPeriod()"
+            [isFuture]="store.isFuturePeriod()">
+          </app-goal-list>
         }
 
         @if (activePanel === 'quarterly') {
@@ -166,6 +180,7 @@
             [scope]="'quarter'"
             [goals]="store.currentQuarterlyGoals()"
             [availableTags]="store.globalTags()"
+            [higherGoals]="store.currentYearlyGoals()"
             [currentPeriodKey]="store.currentPeriodKeys().quarter"
             [isPast]="store.isPastPeriod()"
             [isFuture]="store.isFuturePeriod()">
@@ -185,18 +200,48 @@
         }
       </div>
 
-      <!-- Right Sidebar: Weekly Goals -->
-      <div class="lg:col-span-1">
-        <app-goal-list
-          data-scope="week"
-          [scope]="'week'"
-          [goals]="store.currentWeeklyGoals()"
-          [availableTags]="store.globalTags()"
-          [currentPeriodKey]="store.currentPeriodKeys().week"
-          [isPast]="store.isPastPeriod()"
-          [isFuture]="store.isFuturePeriod()">
-        </app-goal-list>
-      </div>
+      <!-- Right Sidebar (hidden on yearly view) -->
+      @if (activePanel !== 'yearly') {
+        <div class="lg:col-span-1">
+          @if (activePanel === 'weekly') {
+            <!-- Weekly view: quarter goals as context -->
+            <app-goal-list
+              data-scope="quarter"
+              [scope]="'quarter'"
+              [goals]="store.currentQuarterlyGoals()"
+              [availableTags]="store.globalTags()"
+              [higherGoals]="store.currentYearlyGoals()"
+              [currentPeriodKey]="store.currentPeriodKeys().quarter"
+              [isPast]="store.isPastPeriod()"
+              [isFuture]="store.isFuturePeriod()">
+            </app-goal-list>
+          } @else if (activePanel === 'quarterly') {
+            <!-- Quarterly view: year goals as context -->
+            <app-goal-list
+              data-scope="year"
+              [scope]="'year'"
+              [goals]="store.currentYearlyGoals()"
+              [availableTags]="store.globalTags()"
+              [higherGoals]="[]"
+              [currentPeriodKey]="store.currentPeriodKeys().year"
+              [isPast]="store.isPastPeriod()"
+              [isFuture]="store.isFuturePeriod()">
+            </app-goal-list>
+          } @else {
+            <!-- Daily view: week goals as context -->
+            <app-goal-list
+              data-scope="week"
+              [scope]="'week'"
+              [goals]="store.currentWeeklyGoals()"
+              [availableTags]="store.globalTags()"
+              [higherGoals]="store.currentQuarterAndYearGoals()"
+              [currentPeriodKey]="store.currentPeriodKeys().week"
+              [isPast]="store.isPastPeriod()"
+              [isFuture]="store.isFuturePeriod()">
+            </app-goal-list>
+          }
+        </div>
+      }
     </div>
   </div>
   }

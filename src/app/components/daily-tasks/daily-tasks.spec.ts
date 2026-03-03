@@ -48,7 +48,7 @@ describe('DailyTasksComponent', () => {
   describe('Tag Filtering', () => {
     beforeEach(() => {
       component.tasks = [
-        { id: 1, text: 'Task 1', completed: false, tags: ['survive', 'create'], date: '2026-02-22', createdAt: '', updatedAt: '' }
+        { id: 1, text: 'Task 1', completed: false, tags: ['survive', 'create'], goalIds: [], date: '2026-02-22', createdAt: '', updatedAt: '' }
       ];
     });
 
@@ -86,8 +86,8 @@ describe('DailyTasksComponent', () => {
   describe('Tag Input Management', () => {
     beforeEach(() => {
       component.tasks = [
-        { id: 1, text: 'Task 1', completed: false, tags: [], date: '2026-02-22', createdAt: '', updatedAt: '' },
-        { id: 2, text: 'Task 2', completed: false, tags: [], date: '2026-02-22', createdAt: '', updatedAt: '' }
+        { id: 1, text: 'Task 1', completed: false, tags: [], goalIds: [], date: '2026-02-22', createdAt: '', updatedAt: '' },
+        { id: 2, text: 'Task 2', completed: false, tags: [], goalIds: [], date: '2026-02-22', createdAt: '', updatedAt: '' }
       ];
     });
 

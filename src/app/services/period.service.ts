@@ -156,6 +156,14 @@ export class PeriodService {
   }
 
   /**
+   * Get the year offset from the current year for a given quarter key
+   */
+  getYearOffsetForQuarterKey(quarterKey: string): number {
+    const quarterYear = parseInt(quarterKey.split('-Q')[0], 10);
+    return quarterYear - getYear(this.today);
+  }
+
+  /**
    * Get all day keys (Mon-Sun) for a given week key
    */
   getDayKeysForWeek(weekKey: string): string[] {

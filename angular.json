@@ -7,13 +7,13 @@
       "projectType": "application",
       "schematics": {},
       "root": "",
-      "sourceRoot": "src",
+      "sourceRoot": "client",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "browser": "src/main.ts",
+            "browser": "client/main.ts",
             "polyfills": [
               "zone.js"
             ],
@@ -25,7 +25,7 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "client/styles.css"
             ]
           },
           "configurations": {
@@ -54,6 +54,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "rareform:build:production"
@@ -82,7 +85,7 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "client/styles.css"
             ]
           }
         }

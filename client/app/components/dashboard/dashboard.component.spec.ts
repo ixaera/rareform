@@ -17,6 +17,7 @@ describe('DashboardComponent', () => {
 
   beforeEach(async () => {
     mockAuthService = jasmine.createSpyObj('AuthService', ['logout']);
+    mockAuthService.logout.and.returnValue(of(undefined));
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({

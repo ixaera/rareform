@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../services/auth.service';
 
@@ -8,26 +9,29 @@ describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let mockAuthService: jasmine.SpyObj<AuthService>;
-  let mockRouter: jasmine.SpyObj<Router>;
+  let router: Router;
 
   beforeEach(async () => {
     mockAuthService = jasmine.createSpyObj('AuthService', ['login', 'isAuthenticated']);
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+    mockAuthService.isAuthenticated.and.returnValue(false);
+    mockAuthService.login.and.returnValue(of(true));
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent, FormsModule],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
-        { provide: Router, useValue: mockRouter }
+        provideRouter([]),
       ]
     }).compileComponents();
+
+    router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
   });
 
   it('should create', () => {
-    mockAuthService.isAuthenticated.and.returnValue(false);
     fixture.detectChanges();
     expect(component).toBeTruthy();
   });
@@ -35,72 +39,58 @@ describe('LoginComponent', () => {
   describe('ngOnInit', () => {
     it('should redirect to dashboard if already authenticated', () => {
       mockAuthService.isAuthenticated.and.returnValue(true);
-
       component.ngOnInit();
-
-      expect(mockAuthService.isAuthenticated).toHaveBeenCalled();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard']);
+      expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
     });
 
     it('should not redirect if not authenticated', () => {
-      mockAuthService.isAuthenticated.and.returnValue(false);
-
       component.ngOnInit();
-
-      expect(mockAuthService.isAuthenticated).toHaveBeenCalled();
-      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalled();
     });
   });
 
   describe('onLogin', () => {
     beforeEach(() => {
-      mockAuthService.isAuthenticated.and.returnValue(false);
       fixture.detectChanges();
     });
 
     it('should call authService.login with username and password', () => {
       component.username = 'testuser';
       component.password = 'testpass';
-
       component.onLogin();
-
       expect(mockAuthService.login).toHaveBeenCalledWith('testuser', 'testpass');
     });
 
-    it('should navigate to dashboard after login', () => {
+    it('should navigate to dashboard on successful login', () => {
+      mockAuthService.login.and.returnValue(of(true));
       component.username = 'testuser';
       component.password = 'testpass';
-
       component.onLogin();
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard']);
+      expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
     });
 
-    it('should work with empty credentials', () => {
-      component.username = '';
-      component.password = '';
-
+    it('should set errorMessage on failed login', () => {
+      mockAuthService.login.and.returnValue(of(false));
+      component.username = 'testuser';
+      component.password = 'wrongpass';
       component.onLogin();
-
-      expect(mockAuthService.login).toHaveBeenCalledWith('', '');
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard']);
+      expect(router.navigate).not.toHaveBeenCalled();
+      expect(component.errorMessage).toBeTruthy();
     });
 
-    it('should navigate to dashboard even if login fails', () => {
-      // Note: In the fake implementation, login always succeeds
-      // but this test ensures navigation happens regardless
-      component.username = 'user';
-      component.password = 'pass';
-
+    it('should clear errorMessage before each login attempt', () => {
+      mockAuthService.login.and.returnValue(of(false));
       component.onLogin();
+      expect(component.errorMessage).toBeTruthy();
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard']);
+      mockAuthService.login.and.returnValue(of(true));
+      component.onLogin();
+      expect(component.errorMessage).toBe('');
     });
   });
 
   describe('component properties', () => {
     beforeEach(() => {
-      mockAuthService.isAuthenticated.and.returnValue(false);
       fixture.detectChanges();
     });
 

@@ -44,25 +44,21 @@ describe('PeriodService', () => {
       });
 
       it('should return next day for offset 1', () => {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const offsetDay = service.getPeriodKeyFromOffset(1, 'day');
-        const expectedDay = tomorrow.toISOString().split('T')[0];
-
-        expect(offsetDay).toBe(expectedDay);
+        const today = service.getPeriodKeyFromOffset(0, 'day');
+        const tomorrow = service.getPeriodKeyFromOffset(1, 'day');
+        const [y, m, d] = today.split('-').map(Number);
+        const expected = new Date(y, m - 1, d + 1);
+        const expectedDay = `${expected.getFullYear()}-${String(expected.getMonth() + 1).padStart(2, '0')}-${String(expected.getDate()).padStart(2, '0')}`;
+        expect(tomorrow).toBe(expectedDay);
       });
 
       it('should return previous day for offset -1', () => {
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        const offsetDay = service.getPeriodKeyFromOffset(-1, 'day');
-        const expectedDay = yesterday.toISOString().split('T')[0];
-
-        expect(offsetDay).toBe(expectedDay);
+        const today = service.getPeriodKeyFromOffset(0, 'day');
+        const yesterday = service.getPeriodKeyFromOffset(-1, 'day');
+        const [y, m, d] = today.split('-').map(Number);
+        const expected = new Date(y, m - 1, d - 1);
+        const expectedDay = `${expected.getFullYear()}-${String(expected.getMonth() + 1).padStart(2, '0')}-${String(expected.getDate()).padStart(2, '0')}`;
+        expect(yesterday).toBe(expectedDay);
       });
     });
 

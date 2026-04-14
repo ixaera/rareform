@@ -6,7 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "server:dev": "cd server && npm run dev",
+    "server:migrate": "cd server && npm run migrate",
+    "server:seed": "cd server && npm run seed"
   },
   "prettier": {
     "overrides": [

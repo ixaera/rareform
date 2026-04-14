@@ -21,7 +21,18 @@
       "Bash(git -C \"c:\\\\Users\\\\freck\\\\placeholder-planner\" status nul)",
       "Bash(ls:*)",
       "Bash(npx ng test --watch=false --browsers=ChromeHeadless)",
-      "Bash(npx ng test:*)"
+      "Bash(npx ng test:*)",
+      "Bash(git mv:*)",
+      "Bash(grep -A 6 \"FAILED$\")",
+      "Bash(grep -v \"^--$\")",
+      "Bash(grep \" FAILED$\")",
+      "Bash(grep \"FAILED$\")",
+      "Bash(node -e \"const chunks=[]; process.stdin.on\\('data',c=>chunks.push\\(c\\)\\); process.stdin.on\\('end',\\(\\)=>{ const text=Buffer.concat\\(chunks\\).toString\\(\\).replace\\(/\\\\x1b\\\\[[0-9;]*m/g,''\\); const lines=text.split\\('\\\\n'\\).filter\\(l=>l.includes\\('FAILED'\\)\\); console.log\\(lines.join\\('\\\\n'\\)\\); }\\)\")",
+      "Bash(node -e \"const chunks=[]; process.stdin.on\\('data',c=>chunks.push\\(c\\)\\); process.stdin.on\\('end',\\(\\)=>{ const text=Buffer.concat\\(chunks\\).toString\\(\\).replace\\(/\\\\x1b\\\\[[0-9;]*m/g,''\\); const lines=text.split\\('\\\\n'\\).filter\\(l=>l.match\\(/FAILED|TOTAL|ERROR/\\)\\); console.log\\(lines.join\\('\\\\n'\\)\\); }\\)\")",
+      "Bash(git -C /c/projects/rareform status)",
+      "Bash(git -C /c/projects/rareform log --oneline -5)",
+      "Bash(git -C /c/projects/rareform add client/ server/ CLAUDE.md proxy.conf.json render.yaml .gitignore PROJECT_OVERVIEW.md angular.json package.json tailwind.config.js tsconfig.app.json tsconfig.spec.json)",
+      "Bash(git -C /c/projects/rareform add -u)"
     ]
   }
 }

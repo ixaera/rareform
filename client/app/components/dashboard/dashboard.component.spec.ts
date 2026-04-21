@@ -171,16 +171,16 @@ describe('DashboardComponent', () => {
       expect(component.store.currentTasks().length).toBe(6);
     });
 
-    it('should have weekly goals loaded', () => {
-      expect(component.store.currentWeeklyGoals().length).toBeGreaterThanOrEqual(1);
+    it('should have weekly goals empty (goals not yet implemented server-side)', () => {
+      expect(component.store.currentWeeklyGoals()).toEqual([]);
     });
 
-    it('should have quarterly goals loaded', () => {
-      expect(component.store.currentQuarterlyGoals().length).toBeGreaterThanOrEqual(1);
+    it('should have quarterly goals empty (goals not yet implemented server-side)', () => {
+      expect(component.store.currentQuarterlyGoals()).toEqual([]);
     });
 
-    it('should have yearly goals loaded', () => {
-      expect(component.store.currentYearlyGoals().length).toBeGreaterThanOrEqual(1);
+    it('should have yearly goals empty (goals not yet implemented server-side)', () => {
+      expect(component.store.currentYearlyGoals()).toEqual([]);
     });
 
     it('should initialize all period offsets to 0', () => {

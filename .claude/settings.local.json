@@ -32,7 +32,13 @@
       "Bash(git -C /c/projects/rareform status)",
       "Bash(git -C /c/projects/rareform log --oneline -5)",
       "Bash(git -C /c/projects/rareform add client/ server/ CLAUDE.md proxy.conf.json render.yaml .gitignore PROJECT_OVERVIEW.md angular.json package.json tailwind.config.js tsconfig.app.json tsconfig.spec.json)",
-      "Bash(git -C /c/projects/rareform add -u)"
+      "Bash(git -C /c/projects/rareform add -u)",
+      "Bash(git -C /c/projects/rareform status --short)",
+      "Bash(git -C /c/projects/rareform commit -m ':*)",
+      "Bash(git -C /c/projects/rareform push)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

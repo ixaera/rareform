@@ -1,8 +1,11 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Task, Goal } from '../models/task.interface';
 import { PlannerDataService, GoalScope } from './planner-data.service';
 import { PeriodService, PeriodScope } from './period.service';
+
+const DEFAULT_TAGS = ['happy house', 'survive', 'strong body', 'sharp mind', 'create'];
 
 @Injectable({ providedIn: 'root' })
 export class PlannerStoreService {
@@ -31,7 +34,14 @@ export class PlannerStoreService {
   private loadingKeys = signal<Set<string>>(new Set());
 
   // === Tags ===
-  readonly globalTags = signal<string[]>([]);
+  private readonly dbTags = signal<string[]>([]);
+  private readonly dismissedDefaults = signal<string[]>([]);
+  readonly globalTags = computed(() => {
+    const real = this.dbTags();
+    const dismissed = this.dismissedDefaults();
+    const virtual = DEFAULT_TAGS.filter(d => !real.includes(d) && !dismissed.includes(d));
+    return [...real, ...virtual];
+  });
 
   // === Computed signals for current view ===
   readonly currentTasks = computed(() => {
@@ -72,23 +82,20 @@ export class PlannerStoreService {
   initialize(): void {
     const keys = this.currentPeriodKeys();
 
-    // Tier 1: Load current period data in parallel
-    forkJoin({
-      tasks: this.dataService.getTasksForDay(keys.day),
-      weekGoals: this.dataService.getGoalsForPeriod(keys.week, 'week'),
-      quarterGoals: this.dataService.getGoalsForPeriod(keys.quarter, 'quarter'),
-      yearGoals: this.dataService.getGoalsForPeriod(keys.year, 'year'),
-      tags: this.dataService.getTags()
-    }).subscribe(result => {
-      this.setTaskCache(keys.day, result.tasks);
-      this.setGoalCache('week', keys.week, result.weekGoals);
-      this.setGoalCache('quarter', keys.quarter, result.quarterGoals);
-      this.setGoalCache('year', keys.year, result.yearGoals);
-      this.globalTags.set(result.tags);
-
-      // Tier 2: Background prefetch adjacent periods
-      this.prefetchAdjacentPeriods();
+    // Load tasks and tags independently so a failure in one doesn't block the other
+    this.loadTasks(keys.day);
+    this.dataService.getTags().subscribe({
+      next: tags => this.dbTags.set(tags),
+      error: () => {}
     });
+
+    // Goals not yet implemented — seed caches with empty arrays immediately
+    this.setGoalCache('week', keys.week, []);
+    this.setGoalCache('quarter', keys.quarter, []);
+    this.setGoalCache('year', keys.year, []);
+
+    // Prefetch adjacent periods (loadTasks deduplicates via loadingKeys)
+    this.prefetchAdjacentPeriods();
   }
 
   // === Navigation ===
@@ -150,10 +157,18 @@ export class PlannerStoreService {
   }
 
   updateTask(task: Task): void {
-    this.dataService.updateTask(task).subscribe(updated => {
-      this.updateTaskCacheEntry(updated.date!, tasks =>
-        tasks.map(t => t.id === updated.id ? updated : t)
-      );
+    // Optimistic update: apply change locally before server confirms
+    this.updateTaskCacheEntry(task.date, tasks =>
+      tasks.map(t => t.id === task.id ? task : t)
+    );
+    this.dataService.updateTask(task).subscribe({
+      next: updated => {
+        // Reconcile with server-authoritative response (updatedAt etc.)
+        this.updateTaskCacheEntry(updated.date, tasks =>
+          tasks.map(t => t.id === updated.id ? updated : t)
+        );
+      },
+      error: () => {}
     });
   }
 
@@ -210,9 +225,23 @@ export class PlannerStoreService {
   // === Tag CRUD ===
 
   addTaskTag(taskId: number, tag: string): void {
-    this.updateTaskTags(taskId, tags =>
-      tags.length < 5 && !tags.includes(tag) ? [...tags, tag] : null
+    const dateKey = this.currentPeriodKeys().day;
+    const task = (this.taskCache().get(dateKey) ?? []).find(t => t.id === taskId);
+    if (!task || task.tags.length >= 5 || task.tags.includes(tag)) return;
+
+    const updatedTask = { ...task, tags: [...task.tags, tag] };
+
+    // Optimistic: show tag immediately
+    this.updateTaskCacheEntry(dateKey, tasks =>
+      tasks.map(t => t.id === taskId ? updatedTask : t)
     );
+
+    // Materialize virtual tag if needed, then persist to server
+    const materialize$ = this.dbTags().includes(tag)
+      ? of([] as string[])
+      : this.dataService.addTag(tag).pipe(tap(tags => this.dbTags.set(tags)));
+
+    materialize$.subscribe(() => this.updateTask(updatedTask));
   }
 
   removeTaskTag(taskId: number, tagIndex: number): void {
@@ -230,9 +259,23 @@ export class PlannerStoreService {
   }
 
   addGoalTag(goalId: number, scope: GoalScope, tag: string): void {
-    this.updateGoalTags(goalId, scope, tags =>
-      tags.length < 5 && !tags.includes(tag) ? [...tags, tag] : null
+    const periodKey = this.currentPeriodKeys()[scope];
+    const goal = (this.goalCache().get(`${scope}:${periodKey}`) ?? []).find(g => g.id === goalId);
+    if (!goal || goal.tags.length >= 5 || goal.tags.includes(tag)) return;
+
+    const updatedGoal = { ...goal, tags: [...goal.tags, tag] };
+
+    // Optimistic: show tag immediately
+    this.updateGoalCacheEntry(scope, periodKey, goals =>
+      goals.map(g => g.id === goalId ? updatedGoal : g)
     );
+
+    // Materialize virtual tag if needed, then persist to server
+    const materialize$ = this.dbTags().includes(tag)
+      ? of([] as string[])
+      : this.dataService.addTag(tag).pipe(tap(tags => this.dbTags.set(tags)));
+
+    materialize$.subscribe(() => this.updateGoal(updatedGoal));
   }
 
   removeGoalTag(goalId: number, scope: GoalScope, tagIndex: number): void {
@@ -284,23 +327,31 @@ export class PlannerStoreService {
   // === Global Tag Operations ===
 
   addGlobalTag(tag: string): void {
-    this.dataService.addTag(tag).subscribe(tags => this.globalTags.set(tags));
+    this.dataService.addTag(tag).subscribe(tags => this.dbTags.set(tags));
   }
 
   renameGlobalTag(oldTag: string, newTag: string): void {
-    this.dataService.renameTag(oldTag, newTag).subscribe(tags => {
-      this.globalTags.set(tags);
-      // Refresh cached data to reflect renamed tags
-      this.refreshAllCaches();
-    });
+    if (this.dbTags().includes(oldTag)) {
+      this.dataService.renameTag(oldTag, newTag).subscribe(tags => {
+        this.dbTags.set(tags);
+        this.refreshAllCaches();
+      });
+    } else {
+      // Virtual default: persist only the new name; old default auto-drops from computed
+      this.dataService.addTag(newTag).subscribe(tags => this.dbTags.set(tags));
+    }
   }
 
   deleteGlobalTag(tag: string): void {
-    this.dataService.deleteTag(tag).subscribe(tags => {
-      this.globalTags.set(tags);
-      // Refresh cached data to reflect deleted tags
-      this.refreshAllCaches();
-    });
+    if (this.dbTags().includes(tag)) {
+      this.dataService.deleteTag(tag).subscribe(tags => {
+        this.dbTags.set(tags);
+        this.refreshAllCaches();
+      });
+    } else {
+      // Virtual default: dismiss client-side only, no DB call needed
+      this.dismissedDefaults.update(d => [...d, tag]);
+    }
   }
 
   // === Period Label Helpers ===

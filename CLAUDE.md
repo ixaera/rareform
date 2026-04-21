@@ -80,8 +80,49 @@ npm test                 # Karma/Jasmine, all specs under client/
 - `APP_INITIALIZER` calls `checkAuthStatus()` to hydrate the signal from the server before routing
 - `requireAuth` middleware in Express validates the cookie on protected routes
 
-## Data Services (still mock)
-`PlannerDataService` and `UserService` are still backed by mock implementations (`MockPlannerDataService`, `MockUserService`). These are wired in `app.config.ts`. Real implementations are a future phase.
+## Data Services
+- **Tasks and Tags**: backed by `HttpPlannerDataService` (real HTTP calls to Express). Wired in `app.config.ts` via `{ provide: PlannerDataService, useClass: HttpPlannerDataService }`.
+- **Goals**: not yet implemented server-side — `HttpPlannerDataService` returns `of([])` for all goal methods so initialization never blocks.
+- **UserService**: still backed by `MockUserService`.
+- Tests use `MockPlannerDataService` explicitly via `TestBed` providers — the real service is never instantiated in specs.
+
+## Server Routes (`server/src/routes/planner.ts`)
+All routes require the `requireAuth` middleware. Routes are mounted at `/api` in `index.ts`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/tasks?date=YYYY-MM-DD` | Fetch tasks for a day |
+| POST | `/api/tasks` | Create a task |
+| PATCH | `/api/tasks/:id` | Update text/completed/tags/goalIds |
+| DELETE | `/api/tasks/:id` | Delete a task |
+| GET | `/api/tags` | Fetch user's tag list |
+| POST | `/api/tags` | Add a tag (ON CONFLICT DO NOTHING) |
+| PATCH | `/api/tags/:name` | Rename tag + cascade to tasks (transactional) |
+| DELETE | `/api/tags/:name` | Delete tag + cascade to tasks (transactional) |
+
+Tag rename/delete use `pool.connect()` for explicit BEGIN/COMMIT, and `array_replace` / `array_remove` PostgreSQL functions to cascade changes to all task rows.
+
+## Migrations
+- `001_create_users.sql` — users table
+- `002_create_tasks.sql` — tasks table (user_id FK, tags TEXT[], goal_ids INTEGER[], date DATE). Index on (user_id, date).
+- `003_create_user_tags.sql` — per-user canonical tag list. Composite PK (user_id, name) enforces uniqueness.
+
+## Virtual Default Tags (`PlannerStoreService`)
+New users have no tags in the DB. Five default tags (`'happy house', 'survive', 'strong body', 'sharp mind', 'create'`) are shown as "virtual" until first use.
+
+- `dbTags` signal: what the server returned (source of truth for real tags)
+- `dismissedDefaults` signal: defaults the user deleted before ever using them
+- `globalTags` computed: `dbTags ∪ (DEFAULT_TAGS not in dbTags and not dismissed)`
+
+Behaviour on action:
+- **Delete virtual tag** → added to `dismissedDefaults`; no DB call
+- **Rename virtual tag** → calls `addTag(newName)`; old default auto-drops from computed
+- **Apply virtual tag to task** → `addTag` called first (materializes it), then `updateTask`
+
+Dismissed defaults reset on page refresh (ephemeral by design — no data was ever written for them).
+
+## Optimistic Updates (PlannerStoreService)
+`updateTask`, `addTaskTag`, `addGoalTag`, and `removeTaskTag` all update the local cache immediately before the server responds. The server response reconciles with the authoritative `updatedAt`. Errors are silently swallowed for now (no rollback).
 
 ## Deployment (Render)
 Configured in `render.yaml`. Single web service: build compiles Angular then the server TypeScript, runs migrations, then starts Express. Express serves both the API and the Angular static bundle in production.

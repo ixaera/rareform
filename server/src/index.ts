@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
 import { authRouter } from './routes/auth';
+import { plannerRouter } from './routes/planner';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,7 @@ if (!isProd) {
 }
 
 app.use('/api/auth', authRouter);
+app.use('/api', plannerRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });

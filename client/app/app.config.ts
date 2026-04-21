@@ -4,7 +4,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { routes } from './app.routes';
 import { PlannerDataService } from './services/planner-data.service';
-import { MockPlannerDataService } from './services/mock-planner-data.service';
+import { HttpPlannerDataService } from './services/http-planner-data.service';
 import { UserService } from './services/user.service';
 import { MockUserService } from './services/mock-user.service';
 import { AuthService } from './services/auth.service';
@@ -16,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     provideHttpClient(withFetch()),
-    { provide: PlannerDataService, useClass: MockPlannerDataService },
+    { provide: PlannerDataService, useClass: HttpPlannerDataService },
     { provide: UserService, useClass: MockUserService },
     {
       provide: APP_INITIALIZER,
